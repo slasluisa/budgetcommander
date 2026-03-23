@@ -45,6 +45,7 @@ Dark theme with deep purple/blue tones and subtle glow effects. Leans into Magic
 | name         | String        | Deck name                         |
 | commander    | String        | Commander card name                |
 | externalLink | String?       | Moxfield/Archidekt URL            |
+| archived     | Boolean       | Default: false (soft-delete)       |
 | createdAt    | DateTime      |                                    |
 
 ### Season
@@ -113,12 +114,12 @@ Unique constraint: (seasonId, userId) — one vote per user per season. Users ca
 
 ### Poll
 - `POST /api/poll/vote` — Cast or update vote ($20/$50/$100)
-- `POST /api/admin/poll/lock` — Lock poll, set season budget to winning choice
+- `POST /api/admin/poll/lock` — Lock poll, set season budget to winning choice. Accepts optional `choice` param for admin to break ties.
 
 ### Decks
 - `GET /api/decks` — List current user's decks
 - `POST /api/decks` — Register a new deck
-- `DELETE /api/decks/[id]` — Remove a deck
+- `DELETE /api/decks/[id]` — Soft-delete (archive) a deck. Historical game references preserved.
 
 ### Games
 - `POST /api/games` — Create a game (player IDs, own deck, proposed winner)
@@ -163,3 +164,4 @@ Unique constraint: (seasonId, userId) — one vote per user per season. Users ca
 - **Admin dispute resolution:** Admin picks the winner; stats recalculate accordingly.
 - **Banned users:** Banning prevents future logins but preserves game history.
 - **Season constraints:** Only one ACTIVE season at a time. Ending a season freezes all data.
+- **Deck budget enforcement:** Not enforced by the system. Budget compliance is honor-system based, consistent with the community format.
