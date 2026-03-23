@@ -1,0 +1,82 @@
+<h2>Architecture Approach</h2>
+<p class="subtitle">All three use Next.js + Vercel. The difference is in the database and auth layer.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Next.js + Prisma + PostgreSQL (Vercel Postgres) + NextAuth</h3>
+      <p><strong>Recommended</strong></p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Vercel Postgres is fully managed, zero DevOps</li>
+            <li>Prisma gives you type-safe queries and easy migrations</li>
+            <li>NextAuth has built-in Discord provider</li>
+            <li>All services on one platform (Vercel) — simple billing and deployment</li>
+            <li>Generous free tier for small leagues</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Vercel Postgres has storage limits on free tier</li>
+            <li>Vendor lock-in to Vercel's database</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Next.js + Prisma + Supabase (PostgreSQL) + NextAuth</h3>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Supabase has a very generous free tier (500MB)</li>
+            <li>Built-in dashboard for viewing/editing data</li>
+            <li>Can use Supabase Auth instead of NextAuth if preferred</li>
+            <li>More portable — not locked to Vercel for DB</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Two platforms to manage (Vercel + Supabase)</li>
+            <li>Slightly more complex setup</li>
+            <li>Cold starts on free tier can pause after inactivity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Next.js + Drizzle ORM + Turso (SQLite) + NextAuth</h3>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Turso is extremely fast (edge SQLite)</li>
+            <li>Very generous free tier (9GB)</li>
+            <li>Drizzle is lightweight and fast</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>SQLite is less common — fewer tutorials/examples</li>
+            <li>Three platforms (Vercel + Turso + Discord)</li>
+            <li>Drizzle has a smaller ecosystem than Prisma</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
