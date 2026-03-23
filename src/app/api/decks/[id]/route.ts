@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  const deck = await prisma.deck.findUnique({ where: { id } });
+  if (!deck) {
+    return NextResponse.json({ error: "Deck not found" }, { status: 404 });
+  }
+  if (deck.userId !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const updated = await prisma.deck.update({
+    where: { id },
+    data: { archived: true },
+  });
+
+  return NextResponse.json(updated);
+}
