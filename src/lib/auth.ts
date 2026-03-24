@@ -1,44 +1,52 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import Discord from "next-auth/providers/discord";
-import Google from "next-auth/providers/google";
+import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
   providers: [
-    Discord({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    }),
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
+        if (!email || !password) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: { id: true, email: true, name: true, passwordHash: true, banned: true, role: true },
+        });
+        if (!user) return null;
+        if (user.banned) return null;
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) return null;
+
+        return { id: user.id, email: user.email, name: user.name, role: user.role };
+      },
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id! },
-        select: { banned: true },
-      });
-      if (dbUser?.banned) return false;
-      return true;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
+      }
+      return token;
     },
-    async session({ session, user }) {
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = user.id;
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { role: true, banned: true },
-        });
-        (session.user as any).role = dbUser?.role ?? "PLAYER";
-        (session.user as any).banned = dbUser?.banned ?? false;
+        session.user.id = token.id as string;
+        (session.user as any).role = token.role;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/",
+    signIn: "/login",
   },
 });

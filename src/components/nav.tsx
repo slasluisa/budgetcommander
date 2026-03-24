@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -75,18 +75,18 @@ export function Nav() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => signIn("discord")}
+                onClick={() => router.push("/login")}
                 className="border-primary/50 text-primary hover:bg-primary/10"
               >
-                Discord
+                Sign In
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => signIn("google")}
+                onClick={() => router.push("/register")}
                 className="border-secondary/50 text-secondary hover:bg-secondary/10"
               >
-                Google
+                Register
               </Button>
             </div>
           )}
