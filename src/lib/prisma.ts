@@ -10,11 +10,13 @@ function createPrismaClient() {
   if (!connectionString) {
     throw new Error("POSTGRES_PRISMA_URL environment variable is not set");
   }
+  const url = new URL(connectionString);
+  if (!url.searchParams.has("sslmode")) {
+    url.searchParams.set("sslmode", "no-verify");
+  }
   const adapter = new PrismaPg({
-    connectionString,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+    connectionString: url.toString(),
+    ssl: { rejectUnauthorized: false },
   });
   return new PrismaClient({ adapter } as any);
 }
