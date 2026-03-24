@@ -10,11 +10,13 @@ function createPrismaClient() {
   if (!connectionString) {
     throw new Error("POSTGRES_PRISMA_URL environment variable is not set");
   }
+  // Strip sslmode from connection string — pg treats sslmode=require as verify-full,
+  // which rejects self-signed certs. We handle SSL via the ssl option instead.
+  const url = new URL(connectionString);
+  url.searchParams.delete("sslmode");
   const adapter = new PrismaPg({
-    connectionString,
-    ssl: process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+    connectionString: url.toString(),
+    ssl: { rejectUnauthorized: false },
   });
   return new PrismaClient({ adapter } as any);
 }
