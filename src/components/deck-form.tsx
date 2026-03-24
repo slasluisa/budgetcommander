@@ -21,7 +21,7 @@ export function DeckForm() {
     const data = {
       name: formData.get("name") as string,
       commander: formData.get("commander") as string,
-      externalLink: (formData.get("externalLink") as string) || undefined,
+      externalLink: (formData.get("externalLink") as string)?.trim() || undefined,
     };
 
     try {
@@ -59,11 +59,12 @@ export function DeckForm() {
             <Input id="commander" name="commander" required placeholder="e.g., Wilhelt, the Rotcleaver" className="bg-muted border-border" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="externalLink">Decklist Link (optional)</Label>
+            <Label htmlFor="externalLink">Decklist Link</Label>
             <Input
               id="externalLink"
               name="externalLink"
               type="url"
+              required
               placeholder="https://www.moxfield.com/decks/..."
               className="bg-muted border-border"
             />
