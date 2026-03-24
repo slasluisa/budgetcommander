@@ -34,12 +34,20 @@ export async function POST(req: Request) {
     );
   }
 
+  const trimmedLink = externalLink?.trim();
+  if (!trimmedLink) {
+    return NextResponse.json(
+      { error: "Decklist link is required" },
+      { status: 400 }
+    );
+  }
+
   const deck = await prisma.deck.create({
     data: {
       userId: session.user.id!,
       name,
       commander,
-      externalLink: externalLink ?? null,
+      externalLink: trimmedLink,
     },
   });
 
