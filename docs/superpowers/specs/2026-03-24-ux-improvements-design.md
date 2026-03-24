@@ -29,7 +29,8 @@ Add a "Log Game" button to the hero button row on the home page, visible only to
 - **Logged in + polling season:** `[Log Game (primary)] [Vote Now (outline)] [View Standings (outline)]`
 - **Logged in + active season:** `[Log Game (primary)] [View Standings (outline)]`
 - **Logged in + no season:** `[Log Game (primary)] [View Standings (outline)]`
-- **Logged out:** `[View Standings (outline)]` (unchanged)
+- **Logged out + polling season:** `[Vote Now (outline)] [View Standings (outline)]` (unchanged except Vote Now demoted to outline)
+- **Logged out + no polling:** `[View Standings (outline)]` (unchanged)
 
 ---
 
