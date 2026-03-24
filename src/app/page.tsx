@@ -4,10 +4,12 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GameCard } from "@/components/game-card";
+import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
+  const session = await auth();
   const currentSeason = await prisma.season.findFirst({
     where: { status: { in: ["POLLING", "ACTIVE"] } },
     orderBy: { createdAt: "desc" },
@@ -66,8 +68,13 @@ export default async function Home() {
           </Badge>
         )}
         <div className="relative mt-6 flex gap-3">
+          {session?.user && (
+            <Link href="/games/new" className={buttonVariants()}>
+              Log Game
+            </Link>
+          )}
           {currentSeason?.status === "POLLING" && (
-            <Link href="/poll" className={buttonVariants()}>
+            <Link href="/poll" className={buttonVariants({ variant: "outline" }) + " border-border"}>
               Vote Now
             </Link>
           )}
