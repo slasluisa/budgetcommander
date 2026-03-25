@@ -53,7 +53,7 @@ export function Nav() {
                 <Plus className="h-4 w-4" />
                 Log Game
               </Link>
-              <Link href="/profile">
+              <Link href="/profile" className="hidden md:block">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={session.user.image ?? undefined} />
                   <AvatarFallback>

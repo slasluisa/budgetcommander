@@ -21,6 +21,8 @@ export function BottomTabBar() {
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
+    if (href === "/games")
+      return pathname === "/games" || (pathname.startsWith("/games/") && pathname !== "/games/new");
     return pathname === href || pathname.startsWith(href + "/");
   }
 
