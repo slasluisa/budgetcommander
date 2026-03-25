@@ -186,7 +186,9 @@ function PollsTab({
     }
   }
 
-  if (!currentSeason || (currentSeason.status === "COMPLETED" && voteCounts.length === 0)) {
+  const noActivePoll = !currentSeason || (currentSeason.status !== "POLLING" && voteCounts.length === 0);
+
+  if (noActivePoll) {
     return (
       <Card className="border-border bg-card/50 backdrop-blur-sm">
         <CardContent className="p-6 text-center text-muted-foreground">
