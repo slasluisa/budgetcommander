@@ -38,25 +38,30 @@ export async function validateDeckAgainstLeagueBudget(
     return { ok: true };
   }
 
+  const activeBudgetSeason: ActiveBudgetSeason = {
+    name: activeSeason.name,
+    budgetCap: activeSeason.budgetCap,
+  };
+
   const deckId = parseMoxfieldDeckId(externalLink);
   if (!deckId) {
     return {
       ok: false,
       status: 400,
-      error: `Budget validation currently requires a public Moxfield deck link while ${activeSeason.name} is capped at ${formatUsd(activeSeason.budgetCap)}.`,
+      error: `Budget validation currently requires a public Moxfield deck link while ${activeBudgetSeason.name} is capped at ${formatUsd(activeBudgetSeason.budgetCap)}.`,
     };
   }
 
-  const deckPrice = await fetchMoxfieldDeckPrice(deckId, activeSeason);
+  const deckPrice = await fetchMoxfieldDeckPrice(deckId, activeBudgetSeason);
   if (!deckPrice.ok) {
     return deckPrice;
   }
 
-  if (deckPrice.priceUsd > activeSeason.budgetCap) {
+  if (deckPrice.priceUsd > activeBudgetSeason.budgetCap) {
     return {
       ok: false,
       status: 400,
-      error: `Deck costs ${formatUsd(deckPrice.priceUsd)}, but the ${activeSeason.name} budget cap is ${formatUsd(activeSeason.budgetCap)}.`,
+      error: `Deck costs ${formatUsd(deckPrice.priceUsd)}, but the ${activeBudgetSeason.name} budget cap is ${formatUsd(activeBudgetSeason.budgetCap)}.`,
     };
   }
 

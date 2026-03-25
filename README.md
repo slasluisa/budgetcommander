@@ -1,5 +1,15 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database Schemas By Environment
+
+This app selects a Postgres schema automatically from the deployment environment:
+
+- `VERCEL_ENV=production` uses the `production` schema
+- `VERCEL_ENV=preview` uses the `preview` schema
+- local development or `VERCEL_ENV=development` uses the `development` schema
+
+If you want different schema names, set `POSTGRES_SCHEMA_PRODUCTION`, `POSTGRES_SCHEMA_PREVIEW`, and `POSTGRES_SCHEMA_DEVELOPMENT`. `POSTGRES_SCHEMA` can also be used as a global override for every environment.
+
 ## Getting Started
 
 First, run the development server:
