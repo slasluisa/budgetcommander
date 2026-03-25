@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget);
     const res = await signIn("credentials", {
-      email: formData.get("email"),
+      username: formData.get("username"),
       password: formData.get("password"),
       redirect: false,
     });
@@ -29,7 +29,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (res?.error) {
-      setError("Invalid email or password");
+      setError("Invalid username or password");
     } else {
       router.push("/dashboard");
       router.refresh();
@@ -46,8 +46,8 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required autoComplete="email" />
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" name="username" type="text" required autoComplete="username" />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Password</Label>
