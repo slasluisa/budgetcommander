@@ -6,6 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
+function formatUsd(amount: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 type Deck = {
   id: string;
   name: string;
@@ -18,13 +27,16 @@ type Deck = {
 export function DeckManager({
   decks,
   activeSeasonLabel,
+  activeSeasonBudgetCap,
 }: {
   decks: Deck[];
   activeSeasonLabel?: string | null;
+  activeSeasonBudgetCap?: number | null;
 }) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<{
     name: string;
     commander: string;
@@ -32,6 +44,7 @@ export function DeckManager({
   }>({ name: "", commander: "", externalLink: "" });
 
   function beginEdit(deck: Deck) {
+    setError(null);
     setEditingId(deck.id);
     setForm({
       name: deck.name,
@@ -43,11 +56,17 @@ export function DeckManager({
   async function save(deckId: string) {
     setLoadingId(deckId);
     try {
-      await fetch(`/api/decks/${deckId}`, {
+      setError(null);
+      const res = await fetch(`/api/decks/${deckId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(body?.error ?? "Failed to update deck");
+        return;
+      }
       setEditingId(null);
       router.refresh();
     } finally {
@@ -58,6 +77,7 @@ export function DeckManager({
   async function setDefault(deckId: string, isDefault: boolean) {
     setLoadingId(deckId);
     try {
+      setError(null);
       await fetch(`/api/decks/${deckId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -72,6 +92,7 @@ export function DeckManager({
   async function archive(deckId: string) {
     setLoadingId(deckId);
     try {
+      setError(null);
       await fetch(`/api/decks/${deckId}`, { method: "DELETE" });
       router.refresh();
     } finally {
@@ -85,6 +106,13 @@ export function DeckManager({
 
   return (
     <div className="space-y-3">
+      {activeSeasonBudgetCap != null ? (
+        <p className="text-sm text-muted-foreground">
+          {activeSeasonLabel} is capped at {formatUsd(activeSeasonBudgetCap)}. Deck links must
+          point to a public Moxfield list for budget validation.
+        </p>
+      ) : null}
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {decks.map((deck) => {
         const editing = editingId === deck.id;
         return (
@@ -115,6 +143,8 @@ export function DeckManager({
                           externalLink: event.target.value,
                         }))
                       }
+                      type="url"
+                      placeholder="https://www.moxfield.com/decks/..."
                       className="bg-muted border-border"
                     />
                   </div>
@@ -159,7 +189,10 @@ export function DeckManager({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setEditingId(null)}
+                      onClick={() => {
+                        setError(null);
+                        setEditingId(null);
+                      }}
                       disabled={loadingId === deck.id}
                     >
                       Cancel

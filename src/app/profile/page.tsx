@@ -30,7 +30,7 @@ export default async function ProfilePage() {
   const activeSeason = await prisma.season.findFirst({
     where: { status: { in: ["ACTIVE", "COMPLETED"] } },
     orderBy: { createdAt: "desc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, budgetCap: true, status: true },
   });
 
   const [user, pendingGames, decks, confirmedEntries, notifications] = await Promise.all([
@@ -241,6 +241,9 @@ export default async function ProfilePage() {
                 usedThisSeason: deck.gamePlayers.length > 0,
               }))}
               activeSeasonLabel={activeSeason?.name}
+              activeSeasonBudgetCap={
+                activeSeason?.status === "ACTIVE" ? activeSeason.budgetCap : null
+              }
             />
           </CardContent>
         </Card>

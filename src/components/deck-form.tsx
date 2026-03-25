@@ -7,7 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function DeckForm() {
+function formatUsd(amount: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function DeckForm({
+  activeSeasonName,
+  activeBudgetCap,
+}: {
+  activeSeasonName?: string | null;
+  activeBudgetCap?: number | null;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +83,12 @@ export function DeckForm() {
               placeholder="https://www.moxfield.com/decks/..."
               className="bg-muted border-border"
             />
+            {activeBudgetCap != null ? (
+              <p className="text-sm text-muted-foreground">
+                {activeSeasonName} is capped at {formatUsd(activeBudgetCap)}. Use a public
+                Moxfield deck link so we can validate it automatically.
+              </p>
+            ) : null}
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" disabled={loading} className="w-full">

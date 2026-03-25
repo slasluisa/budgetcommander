@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { validateDeckAgainstLeagueBudget } from "@/lib/deck-budget";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,16 @@ export async function PATCH(
       { error: "Decklist link is required" },
       { status: 400 }
     );
+  }
+
+  if (externalLink !== undefined && externalLink !== deck.externalLink) {
+    const budgetValidation = await validateDeckAgainstLeagueBudget(externalLink);
+    if (!budgetValidation.ok) {
+      return NextResponse.json(
+        { error: budgetValidation.error },
+        { status: budgetValidation.status }
+      );
+    }
   }
 
   const updated = await prisma.$transaction(async (tx) => {
