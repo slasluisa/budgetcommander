@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GameCard } from "@/components/game-card";
+import { BrandMark } from "@/components/brand-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -53,13 +54,22 @@ export default async function Home() {
     <div>
       {/* Hero */}
       <div className="relative mb-12 flex flex-col items-center justify-center py-16 text-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent opacity-50 rounded-xl" />
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary/10 to-transparent opacity-50" />
+        <div className="relative mb-6 rounded-[2rem] border border-white/10 bg-white/5 p-3 shadow-[0_0_60px_rgba(124,58,237,0.18)] backdrop-blur-sm">
+          <BrandMark className="h-24 w-24 md:h-28 md:w-28" title="Budget Commander League emblem" />
+        </div>
         <h1 className="relative text-5xl font-extrabold tracking-tight md:text-6xl">
           <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Budget Commander
           </span>
         </h1>
-        <p className="relative mt-3 text-xl text-muted-foreground">League</p>
+        <p className="relative mt-3 text-xl uppercase tracking-[0.45em] text-muted-foreground">
+          League
+        </p>
+        <p className="relative mt-4 max-w-2xl text-pretty text-sm text-slate-300 md:text-base">
+          Track league seasons, log four-player pods, confirm results, and keep the budget
+          battles feeling a little mythic.
+        </p>
         {currentSeason && (
           <Badge variant="outline" className="relative mt-4 border-primary/30 text-primary">
             {currentSeason.name} — {currentSeason.status === "POLLING" ? "Voting Open" : `$${currentSeason.budgetCap} Budget`}

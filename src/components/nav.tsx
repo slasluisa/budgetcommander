@@ -5,16 +5,23 @@ import { useSession } from "next-auth/react";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function Nav() {
   const { data: session } = useSession();
+  const userRole =
+    session?.user && "role" in session.user ? session.user.role : undefined;
 
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-xl font-bold text-primary">
-            Budget Commander
+          <Link href="/" className="transition-transform duration-200 hover:scale-[1.01]">
+            <BrandLogo
+              markClassName="h-9 w-9"
+              className="gap-2.5"
+              title="Budget Commander League home"
+            />
           </Link>
           <div className="hidden gap-4 md:flex">
             <Link
@@ -29,7 +36,7 @@ export function Nav() {
             >
               Standings
             </Link>
-            {(session?.user as any)?.role === "ADMIN" && (
+            {userRole === "ADMIN" && (
               <Link
                 href="/admin"
                 className="text-sm text-muted-foreground hover:text-foreground"

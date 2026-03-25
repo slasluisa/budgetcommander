@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Budget Commander League",
-  description: "MTG Budget Commander League Management",
+  description: "A local MTG Budget Commander league tracker for seasons, polls, pods, and standings.",
 };
 
 export default function RootLayout({

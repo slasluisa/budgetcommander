@@ -1,0 +1,41 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shell" x1="24" y1="26" x2="136" y2="136" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4c1d95"/>
+      <stop offset="0.5" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="shell-stroke" x1="36" y1="20" x2="128" y2="144" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ddd6fe"/>
+      <stop offset="0.45" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#7dd3fc"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="32" y1="32" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5f3ff"/>
+      <stop offset="0.5" stop-color="#c4b5fd"/>
+      <stop offset="1" stop-color="#93c5fd"/>
+    </linearGradient>
+    <linearGradient id="glyph" x1="56" y1="48" x2="104" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff"/>
+      <stop offset="0.58" stop-color="#ddd6fe"/>
+      <stop offset="1" stop-color="#93c5fd"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(80 80) rotate(90) scale(74)">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.9"/>
+      <stop offset="0.55" stop-color="#7c3aed" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#0f172a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="80" cy="80" r="74" fill="url(#glow)" opacity="0.7"/>
+  <rect x="26" y="26" width="108" height="108" rx="28" transform="rotate(45 80 80)" fill="url(#shell)" stroke="url(#shell-stroke)" stroke-width="4"/>
+  <circle cx="80" cy="80" r="52" fill="rgba(15, 23, 42, 0.32)" stroke="url(#ring)" stroke-width="8"/>
+  <circle cx="80" cy="24" r="7.5" fill="#f5f3ff"/>
+  <circle cx="136" cy="80" r="7.5" fill="#bfdbfe"/>
+  <circle cx="80" cy="136" r="7.5" fill="#ddd6fe"/>
+  <circle cx="24" cy="80" r="7.5" fill="#c4b5fd"/>
+  <path d="M58 63 68 45 80 56 92 45 102 63 93 63 87 54 80 64 73 54 67 63Z" fill="url(#glyph)"/>
+  <path d="M80 69 104 93 80 117 56 93Z" fill="rgba(15, 23, 42, 0.42)" stroke="url(#glyph)" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M80 82 91 93 80 104 69 93Z" fill="url(#glyph)" opacity="0.95"/>
+  <path d="M64 116h32" stroke="url(#glyph)" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M60 126h40" stroke="url(#glyph)" stroke-width="5.5" stroke-linecap="round" opacity="0.84"/>
+</svg>
