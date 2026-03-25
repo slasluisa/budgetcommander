@@ -8,6 +8,7 @@ Replace email-based authentication with username-based authentication. Users wil
 
 - Alphanumeric characters and underscores only: `/^[a-zA-Z0-9_]{3,20}$/`
 - 3-20 characters
+- Case-insensitive: stored lowercase, enforced at the application layer (lowercase before insert/lookup)
 - Unique per user (database constraint)
 
 ## Changes
@@ -16,12 +17,12 @@ Replace email-based authentication with username-based authentication. Users wil
 
 - Remove `email String @unique`
 - Add `username String @unique`
-- Migration renames the column to preserve existing data
+- Migration drops email, adds username (fresh start, no data migration needed)
 
 ### Auth Config (`src/lib/auth.ts`)
 
 - Credentials provider accepts `username` + `password` instead of `email` + `password`
-- User lookup changes from `findUnique({ where: { email } })` to `findUnique({ where: { username } })`
+- User lookup lowercases input before querying: `findUnique({ where: { username: username.toLowerCase() } })`
 - JWT token carries `username` instead of `email`
 - Session callback maps `username` instead of `email`
 
@@ -29,8 +30,9 @@ Replace email-based authentication with username-based authentication. Users wil
 
 - Accept `username` instead of `email` in request body
 - Validate username against `/^[a-zA-Z0-9_]{3,20}$/`
+- Lowercase username before storing: prevents case-sensitive duplicates at the application layer
 - Check for duplicate username instead of duplicate email
-- Create user with `username` instead of `email`
+- Create user with lowercased `username`
 
 ### Login Page (`src/app/login/page.tsx`)
 
@@ -70,4 +72,4 @@ Replace email-based authentication with username-based authentication. Users wil
 
 ## Migration Strategy
 
-Single Prisma migration that renames `email` → `username`. Existing email values become usernames (users will need to know their "username" is their old email, or data can be manually cleaned if the app has few users).
+Drop existing user data (low-user-count app, fresh start acceptable) and create the `username` column fresh. The migration replaces the `email` column with `username`.
