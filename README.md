@@ -10,6 +10,18 @@ This app selects a Postgres schema automatically from the deployment environment
 
 If you want different schema names, set `POSTGRES_SCHEMA_PRODUCTION`, `POSTGRES_SCHEMA_PREVIEW`, and `POSTGRES_SCHEMA_DEVELOPMENT`. `POSTGRES_SCHEMA` can also be used as a global override for every environment.
 
+## Database Deployment Workflow
+
+Local development should create migrations with `npx prisma migrate dev`, but production-style schema changes should be applied by Vercel during deployment, not from a developer machine.
+
+This repo uses a dedicated Vercel build command:
+
+- local `npm run build` runs `prisma generate && next build`
+- Vercel runs `npm run vercel-build`
+- `npm run vercel-build` runs `prisma generate && prisma migrate deploy && next build`
+
+That means any committed migration in `prisma/migrations` will be applied automatically during Vercel deployments, using the schema selected from `VERCEL_ENV`.
+
 ## Getting Started
 
 First, run the development server:
