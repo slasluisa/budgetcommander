@@ -10,7 +10,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : "";
 
   if (!name) {
