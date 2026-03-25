@@ -9,8 +9,16 @@ export default async function AdminPage() {
   const session = await auth();
   if (!session?.user || (session.user as any).role !== "ADMIN") redirect("/");
 
-  const [seasons, disputedGames, users] = await Promise.all([
-    prisma.season.findMany({ orderBy: { createdAt: "desc" } }),
+  const currentSeason = await prisma.season.findFirst({ orderBy: { createdAt: "desc" } });
+
+  const [rawVotes, disputedGames, users] = await Promise.all([
+    currentSeason
+      ? prisma.pollVote.groupBy({
+          by: ["choice"],
+          where: { seasonId: currentSeason.id },
+          _count: { choice: true },
+        })
+      : Promise.resolve([]),
     prisma.game.findMany({
       where: { status: "DISPUTED" },
       include: {
@@ -29,11 +37,14 @@ export default async function AdminPage() {
     }),
   ]);
 
+  const voteCounts = rawVotes.map((v) => ({ choice: v.choice, count: v._count.choice }));
+
   return (
     <div>
       <h1 className="mb-6 text-3xl font-bold">Admin Panel</h1>
       <AdminPanel
-        seasons={JSON.parse(JSON.stringify(seasons))}
+        currentSeason={currentSeason ? JSON.parse(JSON.stringify(currentSeason)) : null}
+        voteCounts={voteCounts}
         disputedGames={JSON.parse(JSON.stringify(disputedGames))}
         users={users}
       />
