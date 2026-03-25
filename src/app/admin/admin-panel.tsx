@@ -7,9 +7,32 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type Season = { id: string; name: string; status: string; budgetCap: number | null; createdAt: string };
 type VoteCount = { choice: number; count: number };
+type PollVoteRecord = {
+  id: string;
+  choice: number;
+  user: { id: string; name: string };
+};
+type GameRecord = {
+  id: string;
+  createdAt: string;
+  status: string;
+  season: { name: string };
+  players: { userId: string; user: { id: string; name: string }; isWinner: boolean }[];
+};
 type DisputedGame = {
   id: string;
   createdAt: string;
@@ -20,14 +43,18 @@ type User = { id: string; name: string; email: string; role: string; banned: boo
 
 export function AdminPanel({
   currentSeason,
-  voteCounts,
+  pollVotes,
+  allGames,
   disputedGames,
   users,
+  currentUserId,
 }: {
   currentSeason: Season | null;
-  voteCounts: VoteCount[];
+  pollVotes: PollVoteRecord[];
+  allGames: GameRecord[];
   disputedGames: DisputedGame[];
   users: User[];
+  currentUserId: string;
 }) {
   const router = useRouter();
 
@@ -39,6 +66,7 @@ export function AdminPanel({
         <TabsTrigger value="disputes">
           Disputes {disputedGames.length > 0 && `(${disputedGames.length})`}
         </TabsTrigger>
+        <TabsTrigger value="games">Games</TabsTrigger>
         <TabsTrigger value="users">Users</TabsTrigger>
       </TabsList>
 
@@ -47,15 +75,19 @@ export function AdminPanel({
       </TabsContent>
 
       <TabsContent value="polls">
-        <PollsTab currentSeason={currentSeason} voteCounts={voteCounts} onRefresh={() => router.refresh()} />
+        <PollsTab currentSeason={currentSeason} pollVotes={pollVotes} onRefresh={() => router.refresh()} />
       </TabsContent>
 
       <TabsContent value="disputes">
         <DisputesTab games={disputedGames} onRefresh={() => router.refresh()} />
       </TabsContent>
 
+      <TabsContent value="games">
+        <GamesTab games={allGames} onRefresh={() => router.refresh()} />
+      </TabsContent>
+
       <TabsContent value="users">
-        <UsersTab users={users} onRefresh={() => router.refresh()} />
+        <UsersTab users={users} currentUserId={currentUserId} onRefresh={() => router.refresh()} />
       </TabsContent>
     </Tabs>
   );
@@ -92,6 +124,17 @@ function BudgetTab({ currentSeason, onRefresh }: { currentSeason: Season | null;
     }
   }
 
+  async function deleteSeason() {
+    if (!currentSeason) return;
+    setLoading(true);
+    try {
+      await fetch(`/api/admin/seasons/${currentSeason.id}`, { method: "DELETE" });
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const showCreateForm = !currentSeason || currentSeason.status === "COMPLETED";
 
   return (
@@ -103,14 +146,37 @@ function BudgetTab({ currentSeason, onRefresh }: { currentSeason: Season | null;
         {showCreateForm ? (
           <>
             {currentSeason?.status === "COMPLETED" && (
-              <div className="rounded-lg bg-muted/20 p-3">
-                <span className="font-medium">{currentSeason.name}</span>
-                <Badge variant="outline" className="ml-2 border-border text-muted-foreground">
-                  COMPLETED
-                </Badge>
-                {currentSeason.budgetCap && (
-                  <span className="ml-2 text-sm text-muted-foreground">${currentSeason.budgetCap}</span>
-                )}
+              <div className="flex items-center justify-between rounded-lg bg-muted/20 p-3">
+                <div>
+                  <span className="font-medium">{currentSeason.name}</span>
+                  <Badge variant="outline" className="ml-2 border-border text-muted-foreground">
+                    COMPLETED
+                  </Badge>
+                  {currentSeason.budgetCap && (
+                    <span className="ml-2 text-sm text-muted-foreground">${currentSeason.budgetCap}</span>
+                  )}
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={<Button size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10" disabled={loading} />}
+                  >
+                      Delete Season
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Season</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete this season and all associated poll votes and games. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={deleteSeason}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
             <div className="flex gap-2">
@@ -145,9 +211,38 @@ function BudgetTab({ currentSeason, onRefresh }: { currentSeason: Season | null;
                 <span className="ml-3 text-sm text-muted-foreground">Awaiting poll result</span>
               )}
             </div>
-            <Button size="sm" variant="destructive" onClick={endSeason} disabled={loading}>
-              End Season
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="destructive" onClick={endSeason} disabled={loading}>
+                End Season
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger
+                  render={<Button
+                    size="sm"
+                    variant="outline"
+                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    disabled={loading || currentSeason.status === "ACTIVE"}
+                    title={currentSeason.status === "ACTIVE" ? "Cannot delete an active season" : undefined}
+                  />}
+                >
+                    Delete Season
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Season</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete this season and all associated poll votes and games. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={deleteSeason}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         )}
       </CardContent>
@@ -157,11 +252,11 @@ function BudgetTab({ currentSeason, onRefresh }: { currentSeason: Season | null;
 
 function PollsTab({
   currentSeason,
-  voteCounts,
+  pollVotes,
   onRefresh,
 }: {
   currentSeason: Season | null;
-  voteCounts: VoteCount[];
+  pollVotes: PollVoteRecord[];
   onRefresh: () => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -186,7 +281,22 @@ function PollsTab({
     }
   }
 
-  const noActivePoll = !currentSeason || (currentSeason.status !== "POLLING" && voteCounts.length === 0);
+  async function deleteVote(voteId: string) {
+    setLoading(true);
+    try {
+      await fetch(`/api/admin/votes/${voteId}`, { method: "DELETE" });
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const voteCounts: VoteCount[] = [20, 50, 100].map((choice) => ({
+    choice,
+    count: pollVotes.filter((v) => v.choice === choice).length,
+  }));
+  const totalVotes = pollVotes.length;
+  const noActivePoll = !currentSeason || (currentSeason.status !== "POLLING" && pollVotes.length === 0);
 
   if (noActivePoll) {
     return (
@@ -198,7 +308,6 @@ function PollsTab({
     );
   }
 
-  const totalVotes = voteCounts.reduce((sum, v) => sum + v.count, 0);
   const isPolling = currentSeason.status === "POLLING";
 
   return (
@@ -234,6 +343,40 @@ function PollsTab({
               );
             })}
             <p className="text-sm text-muted-foreground">{totalVotes} total vote{totalVotes !== 1 ? "s" : ""}</p>
+          </div>
+        )}
+
+        {pollVotes.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Individual Votes</h4>
+            {pollVotes.map((vote) => (
+              <div key={vote.id} className="flex items-center justify-between rounded-lg bg-muted/20 p-2">
+                <span className="text-sm">
+                  {vote.user.name} — <span className="font-medium">${vote.choice}</span>
+                </span>
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={<Button size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10" disabled={loading} />}
+                  >
+                      Remove
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove Vote</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Remove {vote.user.name}&apos;s vote for ${vote.choice}? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteVote(vote.id)}>
+                        Remove
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            ))}
           </div>
         )}
 
@@ -310,13 +453,102 @@ function DisputesTab({ games, onRefresh }: { games: DisputedGame[]; onRefresh: (
   );
 }
 
-function UsersTab({ users, onRefresh }: { users: User[]; onRefresh: () => void }) {
+function GamesTab({ games, onRefresh }: { games: GameRecord[]; onRefresh: () => void }) {
+  const [loading, setLoading] = useState(false);
+
+  async function deleteGame(gameId: string) {
+    setLoading(true);
+    try {
+      await fetch(`/api/admin/games/${gameId}`, { method: "DELETE" });
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (games.length === 0) {
+    return (
+      <Card className="border-border bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-6 text-center text-muted-foreground">
+          No games recorded.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-border bg-card/50 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle>Games</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {games.map((game) => (
+          <div key={game.id} className="flex items-center justify-between rounded-lg bg-muted/20 p-3">
+            <div>
+              <span className="text-sm text-muted-foreground">
+                {game.season.name} &middot; {new Date(game.createdAt).toLocaleDateString()}
+              </span>
+              <Badge
+                variant="outline"
+                className={`ml-2 ${
+                  game.status === "CONFIRMED"
+                    ? "border-green-500/30 text-green-400"
+                    : game.status === "DISPUTED"
+                      ? "border-red-500/30 text-red-400"
+                      : "border-yellow-500/30 text-yellow-400"
+                }`}
+              >
+                {game.status}
+              </Badge>
+              <p className="text-sm">
+                Players: {game.players.map((p) => p.user.name).join(", ")}
+              </p>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={<Button size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10" disabled={loading} />}
+              >
+                  Delete
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Game</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete this game. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteGame(game.id)}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function UsersTab({ users, currentUserId, onRefresh }: { users: User[]; currentUserId: string; onRefresh: () => void }) {
   const [loading, setLoading] = useState(false);
 
   async function toggleBan(userId: string) {
     setLoading(true);
     try {
       await fetch(`/api/admin/users/${userId}/ban`, { method: "POST" });
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    setLoading(true);
+    try {
+      await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
       onRefresh();
     } finally {
       setLoading(false);
@@ -338,14 +570,39 @@ function UsersTab({ users, onRefresh }: { users: User[]; onRefresh: () => void }
                 <Badge className="ml-2 bg-primary/20 text-primary">Admin</Badge>
               )}
             </div>
-            <Button
-              size="sm"
-              variant={user.banned ? "default" : "destructive"}
-              onClick={() => toggleBan(user.id)}
-              disabled={loading || user.role === "ADMIN"}
-            >
-              {user.banned ? "Unban" : "Ban"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={user.banned ? "default" : "destructive"}
+                onClick={() => toggleBan(user.id)}
+                disabled={loading || user.role === "ADMIN"}
+              >
+                {user.banned ? "Unban" : "Ban"}
+              </Button>
+              {user.role !== "ADMIN" && user.id !== currentUserId && (
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    render={<Button size="sm" variant="outline" className="border-red-500/30 text-red-400 hover:bg-red-500/10" disabled={loading} />}
+                  >
+                      Delete
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete User</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete {user.name} and all their data (decks, votes, games). This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteUser(user.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </div>
         ))}
       </CardContent>
