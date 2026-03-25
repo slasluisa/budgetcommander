@@ -22,16 +22,38 @@ Allow users to change their display name from the dashboard via an inline edit i
 
 ## Dashboard UI
 
-- Add an editable name display near the top of the dashboard where the user greeting is shown
+- Create a new `"use client"` component `src/app/dashboard/name-editor.tsx` for the interactive edit widget
+- The server component `dashboard/page.tsx` passes the initial name as a prop to this client component
 - Default state: displays the name with a pencil/edit icon button
 - Edit state: input field (pre-filled with current name) with save and cancel buttons
-- On save: call `PATCH /api/user/profile`, show success/error toast via sonner
+- On save: call `PATCH /api/user/profile`, show success/error toast via sonner, then call `router.refresh()` to update any server-rendered name content on the dashboard
 - On cancel: revert to display state with original name
 
 ## Session Sync
 
 - After successful API response, call NextAuth `update()` from `useSession()` to refresh the session
-- Update the NextAuth JWT callback to re-fetch the user's name from the database when `trigger === "update"` is passed, so the nav and other session-dependent UI reflect the new name without a page reload
+- The nav component (`src/components/nav.tsx`) already uses `useSession()` and will automatically reflect the updated name after the session update call
+- Other pages (leaderboard, player profiles, game details) read the name from the database via Prisma and will show the updated name on next page load
+- Update the NextAuth JWT callback to re-fetch the user's name from the database when `trigger === "update"`:
+
+```ts
+async jwt({ token, user, trigger }) {
+  if (user) {
+    token.id = user.id;
+    token.role = (user as any).role;
+  }
+  if (trigger === "update") {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: token.id as string },
+      select: { name: true },
+    });
+    if (dbUser) token.name = dbUser.name;
+  }
+  return token;
+},
+```
+
+Note: `token.name` must be set explicitly on update since NextAuth's default auto-copy of name to token only happens on initial sign-in.
 
 ## Validation
 
@@ -41,5 +63,6 @@ Allow users to change their display name from the dashboard via an inline edit i
 ## Files to Create/Modify
 
 - **Create**: `src/app/api/user/profile/route.ts` - PATCH endpoint
-- **Modify**: `src/app/dashboard/page.tsx` - add inline name edit UI
-- **Modify**: `src/lib/auth.ts` - update JWT callback to handle session updates
+- **Create**: `src/app/dashboard/name-editor.tsx` - client component for inline name editing
+- **Modify**: `src/app/dashboard/page.tsx` - embed NameEditor component, pass initial name as prop
+- **Modify**: `src/lib/auth.ts` - update JWT callback to handle session updates with `trigger === "update"`
