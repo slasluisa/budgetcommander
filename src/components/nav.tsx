@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Plus } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
+import { cn } from "@/lib/utils";
 
 export function Nav() {
   const { data: session } = useSession();
@@ -58,10 +59,10 @@ export function Nav() {
             <>
               <Link
                 href="/games/new"
-                className={
-                  buttonVariants() +
-                  " hidden gap-1.5 bg-gradient-to-r from-primary to-secondary md:inline-flex"
-                }
+                className={cn(
+                  buttonVariants(),
+                  "hidden gap-1.5 bg-gradient-to-r from-primary to-secondary md:inline-flex"
+                )}
               >
                 <Plus className="h-4 w-4" />
                 Log Game
