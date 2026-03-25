@@ -1,19 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { PollResults } from "@/lib/poll";
+import { cn } from "@/lib/utils";
 
-type PollResults = {
-  total: number;
-  votes: { choice: number; count: number; percentage: number }[];
-  userVote: number | null;
-  locked: boolean;
-  budgetCap: number | null;
+type PollWidgetProps = {
+  results: PollResults;
+  title?: string;
+  description?: string;
+  className?: string;
+  showAuthPrompt?: boolean;
 };
 
-export function PollWidget({ results }: { results: PollResults }) {
+export function PollWidget({
+  results,
+  title,
+  description,
+  className,
+  showAuthPrompt = false,
+}: PollWidgetProps) {
+  const router = useRouter();
   const { data: session } = useSession();
   const [selected, setSelected] = useState<number | null>(results.userVote);
   const [loading, setLoading] = useState(false);
@@ -31,7 +43,7 @@ export function PollWidget({ results }: { results: PollResults }) {
       });
       if (res.ok) {
         setSelected(choice);
-        window.location.reload();
+        router.refresh();
       }
     } finally {
       setLoading(false);
@@ -39,13 +51,17 @@ export function PollWidget({ results }: { results: PollResults }) {
   }
 
   return (
-    <Card className="border-border bg-card/50 backdrop-blur-sm">
+    <Card className={cn("border-border bg-card/50 backdrop-blur-sm", className)}>
       <CardHeader>
         <CardTitle className="text-center">
-          {results.locked
-            ? `Budget Set: $${results.budgetCap}`
-            : "Vote for the Budget Cap"}
+          {title ??
+            (results.locked
+              ? `Budget Set: $${results.budgetCap}`
+              : "Vote for the Budget Cap")}
         </CardTitle>
+        {description ? (
+          <CardDescription className="text-center">{description}</CardDescription>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
         {choices.map((choice) => {
@@ -85,6 +101,27 @@ export function PollWidget({ results }: { results: PollResults }) {
         <p className="text-center text-xs text-muted-foreground">
           {results.total} total vote{results.total !== 1 ? "s" : ""}
         </p>
+        {!results.locked && session?.user && selected !== null ? (
+          <p className="text-center text-xs text-muted-foreground">
+            Your current vote is set to ${selected}. You can change it while the poll is open.
+          </p>
+        ) : null}
+        {!results.locked && !session?.user && showAuthPrompt ? (
+          <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4 text-center">
+            <p className="text-sm font-medium">Sign up or sign in to cast your vote.</p>
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              <Link href="/register" className={buttonVariants({ size: "sm" })}>
+                Sign Up
+              </Link>
+              <Link
+                href="/login"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Sign In
+              </Link>
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

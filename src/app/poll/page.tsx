@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { getPollResultsForSeason } from "@/lib/poll";
 import { PollWidget } from "@/components/poll-widget";
 
 export const dynamic = "force-dynamic";
@@ -20,45 +21,20 @@ export default async function PollPage() {
     );
   }
 
-  const votes = await prisma.pollVote.groupBy({
-    by: ["choice"],
-    where: { seasonId: season.id },
-    _count: { choice: true },
-  });
-
-  const total = votes.reduce((sum, v) => sum + v._count.choice, 0);
-
-  const userVote = session?.user
-    ? await prisma.pollVote.findUnique({
-        where: {
-          seasonId_userId: {
-            seasonId: season.id,
-            userId: session.user.id!,
-          },
-        },
-      })
-    : null;
-
-  const results = {
-    total,
-    votes: [20, 50, 100].map((choice) => {
-      const v = votes.find((x) => x.choice === choice);
-      const count = v?._count.choice ?? 0;
-      return {
-        choice,
-        count,
-        percentage: total > 0 ? (count / total) * 100 : 0,
-      };
-    }),
-    userVote: userVote?.choice ?? null,
-    locked: season.status !== "POLLING",
-    budgetCap: season.budgetCap,
-  };
+  const results = await getPollResultsForSeason(season.id, session?.user?.id);
 
   return (
     <div className="mx-auto max-w-md">
       <h1 className="mb-6 text-center text-3xl font-bold">{season.name} — Budget Poll</h1>
-      <PollWidget results={results} />
+      <PollWidget
+        results={results}
+        showAuthPrompt
+        description={
+          results.locked
+            ? "The poll is closed. Final results are shown below."
+            : "Cast or update your vote while polling is still open."
+        }
+      />
     </div>
   );
 }
