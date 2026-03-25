@@ -15,12 +15,11 @@ export default async function DashboardPage() {
 
   const userId = session.user.id!;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true },
-  });
-
-  const [pendingGames, decks, confirmedGames] = await Promise.all([
+  const [user, pendingGames, decks, confirmedGames] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    }),
     prisma.game.findMany({
       where: {
         status: "PENDING",
