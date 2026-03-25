@@ -18,7 +18,7 @@ function createPrismaClient() {
     connectionString: url.toString(),
     ssl: { rejectUnauthorized: false },
   });
-  return new PrismaClient({ adapter } as any);
+  return new PrismaClient({ adapter });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();

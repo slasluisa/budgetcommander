@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,13 @@ export async function POST(
     );
   }
 
+  if (!playerEntry.deckId && !deckId) {
+    return NextResponse.json(
+      { error: "Select your deck before confirming" },
+      { status: 400 }
+    );
+  }
+
   // Validate deck belongs to user if provided
   if (deckId) {
     const deck = await prisma.deck.findUnique({ where: { id: deckId } });
@@ -77,6 +85,14 @@ export async function POST(
       data: { status: "CONFIRMED" },
       include: { players: { include: { user: true, deck: true } }, season: true },
     });
+    await createNotifications(
+      updatedGame.players.map((player) => player.userId),
+      {
+        title: "Game confirmed",
+        body: "All players confirmed this pod. Standings are now updated.",
+        href: `/games/${id}`,
+      }
+    );
   } else {
     updatedGame = await prisma.game.findUnique({
       where: { id },

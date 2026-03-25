@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
+import { createNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +14,7 @@ export async function POST(
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if ((session.user as any).role !== "ADMIN") {
+  if ((session.user as { role?: string }).role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -64,6 +66,24 @@ export async function POST(
       },
     });
   });
+
+  await writeAuditLog({
+    actorId: session.user.id,
+    action: "game.resolve",
+    targetType: "game",
+    targetId: updatedGame.id,
+    summary: `Resolved disputed game ${updatedGame.id}`,
+    details: { winnerId },
+  });
+
+  await createNotifications(
+    updatedGame.players.map((player) => player.userId),
+    {
+      title: "Dispute resolved",
+      body: "An admin resolved the disputed pod and updated the result.",
+      href: `/games/${updatedGame.id}`,
+    }
+  );
 
   return NextResponse.json(updatedGame);
 }

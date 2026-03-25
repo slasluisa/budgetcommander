@@ -21,6 +21,7 @@ enum GameStatus {
   PENDING
   CONFIRMED
   DISPUTED
+  CANCELLED
 }
 
 model User {
@@ -31,12 +32,16 @@ model User {
   avatar       String?
   role         Role     @default(PLAYER)
   banned       Boolean  @default(false)
+  defaultDeckId String?
   createdAt    DateTime @default(now())
 
-  decks       Deck[]
-  pollVotes   PollVote[]
-  gamePlayers GamePlayer[]
-  gamesCreated Game[] @relation("GameCreator")
+  decks         Deck[]         @relation("UserDecks")
+  defaultDeck   Deck?          @relation("UserDefaultDeck", fields: [defaultDeckId], references: [id], onDelete: SetNull)
+  pollVotes     PollVote[]
+  gamePlayers   GamePlayer[]
+  gamesCreated  Game[]         @relation("GameCreator")
+  notifications Notification[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
 }
 
 model Deck {
@@ -48,8 +53,9 @@ model Deck {
   archived     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gamePlayers GamePlayer[]
+  user            User         @relation("UserDecks", fields: [userId], references: [id], onDelete: Cascade)
+  defaultForUsers User[]       @relation("UserDefaultDeck")
+  gamePlayers     GamePlayer[]
 }
 
 model Season {
@@ -80,6 +86,8 @@ model Game {
   seasonId    String
   createdById String
   status      GameStatus @default(PENDING)
+  lastReminderAt DateTime?
+  cancelledAt DateTime?
   createdAt   DateTime   @default(now())
 
   season    Season       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
@@ -100,4 +108,29 @@ model GamePlayer {
   deck Deck? @relation(fields: [deckId], references: [id], onDelete: SetNull)
 
   @@unique([gameId, userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  targetType String
+  targetId   String?
+  summary    String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
 }

@@ -9,9 +9,10 @@ export async function GET() {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = session.user.id!;
 
   const decks = await prisma.deck.findMany({
-    where: { userId: session.user.id!, archived: false },
+    where: { userId, archived: false },
     orderBy: { createdAt: "desc" },
   });
 
@@ -23,6 +24,7 @@ export async function POST(req: Request) {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const userId = session.user.id!;
 
   const body = await req.json();
   const { name, commander, externalLink } = body;
@@ -42,13 +44,29 @@ export async function POST(req: Request) {
     );
   }
 
-  const deck = await prisma.deck.create({
-    data: {
-      userId: session.user.id!,
-      name,
-      commander,
-      externalLink: trimmedLink,
-    },
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { defaultDeckId: true },
+  });
+
+  const deck = await prisma.$transaction(async (tx) => {
+    const createdDeck = await tx.deck.create({
+      data: {
+        userId,
+        name,
+        commander,
+        externalLink: trimmedLink,
+      },
+    });
+
+    if (!user?.defaultDeckId) {
+      await tx.user.update({
+        where: { id: userId },
+        data: { defaultDeckId: createdDeck.id },
+      });
+    }
+
+    return createdDeck;
   });
 
   return NextResponse.json(deck, { status: 201 });

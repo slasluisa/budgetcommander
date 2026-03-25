@@ -15,8 +15,6 @@ export async function POST(
   }
 
   const { id } = await params;
-  const userId = session.user.id!;
-
   const game = await prisma.game.findUnique({
     where: { id },
     include: { players: true },
@@ -26,41 +24,35 @@ export async function POST(
     return NextResponse.json({ error: "Game not found" }, { status: 404 });
   }
 
-  const isPlayer = game.players.some((p) => p.userId === userId);
-  if (!isPlayer) {
-    return NextResponse.json(
-      { error: "You are not a player in this game" },
-      { status: 403 }
-    );
+  const isAdmin = (session.user as { role?: string }).role === "ADMIN";
+  if (game.createdById !== session.user.id && !isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   if (game.status !== "PENDING") {
     return NextResponse.json(
-      { error: "Only PENDING games can be disputed" },
+      { error: "Only pending games can be cancelled" },
       { status: 409 }
     );
   }
 
   const updated = await prisma.game.update({
     where: { id },
-    data: { status: "DISPUTED" },
-    include: { players: { include: { user: true, deck: true } }, season: true },
-  });
-
-  const admins = await prisma.user.findMany({
-    where: { role: "ADMIN" },
-    select: { id: true },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+    },
+    include: {
+      players: { include: { user: true, deck: true } },
+      season: true,
+    },
   });
 
   await createNotifications(
-    [
-      game.createdById,
-      ...game.players.map((player) => player.userId),
-      ...admins.map((admin) => admin.id),
-    ],
+    game.players.map((player) => player.userId),
     {
-      title: "Game disputed",
-      body: "A player disputed this pod. An admin review may be needed.",
+      title: "Pending game cancelled",
+      body: "This pod was cancelled before confirmation completed.",
       href: `/games/${id}`,
     }
   );

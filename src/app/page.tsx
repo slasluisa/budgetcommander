@@ -84,6 +84,9 @@ export default async function Home() {
           <Link href="/leaderboard" className={buttonVariants({ variant: "outline" }) + " border-border"}>
             View Standings
           </Link>
+          <Link href="/seasons" className={buttonVariants({ variant: "outline" }) + " border-border"}>
+            Season Archive
+          </Link>
         </div>
       </div>
 

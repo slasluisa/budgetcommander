@@ -36,6 +36,12 @@ export function Nav() {
             >
               Standings
             </Link>
+            <Link
+              href="/seasons"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Seasons
+            </Link>
             {userRole === "ADMIN" && (
               <Link
                 href="/admin"

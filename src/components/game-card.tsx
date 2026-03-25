@@ -2,12 +2,14 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getPendingAgeLabel, isGameOverdue } from "@/lib/league";
 
 type GameCardProps = {
   game: {
     id: string;
     status: string;
     createdAt: string;
+    lastReminderAt?: string | null;
     season: { name: string };
     players: {
       isWinner: boolean;
@@ -34,12 +36,26 @@ export function GameCard({ game }: GameCardProps) {
                   ? "border-green-500/30 text-green-400"
                   : game.status === "DISPUTED"
                   ? "border-red-500/30 text-red-400"
+                  : game.status === "CANCELLED"
+                  ? "border-slate-500/30 text-slate-300"
                   : "border-yellow-500/30 text-yellow-400"
               }
             >
               {game.status}
             </Badge>
           </div>
+          {game.status === "PENDING" && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              <Badge variant="outline" className="border-border text-muted-foreground">
+                {getPendingAgeLabel(game.createdAt)}
+              </Badge>
+              {isGameOverdue(game.createdAt) && (
+                <Badge variant="outline" className="border-yellow-500/30 text-yellow-400">
+                  Overdue
+                </Badge>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             {game.players.map((p) => (
               <div

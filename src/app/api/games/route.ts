@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { GameStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createNotifications } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +16,36 @@ export async function GET(req: Request) {
   const seasonId = searchParams.get("seasonId") ?? undefined;
   const playerId = searchParams.get("playerId") ?? undefined;
   const status = searchParams.get("status") ?? undefined;
+  const overdueOnly = searchParams.get("overdue") === "true";
+  const q = searchParams.get("q")?.trim();
 
   const games = await prisma.game.findMany({
     where: {
       ...(seasonId ? { seasonId } : {}),
       ...(playerId ? { players: { some: { userId: playerId } } } : {}),
-      ...(status ? { status: status as any } : {}),
+      ...(status ? { status: status as GameStatus } : {}),
+      ...(overdueOnly
+        ? {
+            status: "PENDING",
+            createdAt: {
+              lte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            },
+          }
+        : {}),
+      ...(q
+        ? {
+            players: {
+              some: {
+                user: {
+                  name: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          }
+        : {}),
     },
     include: {
       players: {
@@ -90,6 +116,39 @@ export async function POST(req: Request) {
     );
   }
 
+  const existingPendingGames = await prisma.game.findMany({
+    where: {
+      seasonId: season.id,
+      status: "PENDING",
+      players: {
+        some: {
+          userId: { in: allPlayerIds },
+        },
+      },
+    },
+    include: {
+      players: {
+        select: { userId: true },
+      },
+    },
+  });
+
+  const duplicateGame = existingPendingGames.find((pendingGame) => {
+    const existingIds = pendingGame.players.map((player) => player.userId).sort();
+    const nextIds = [...allPlayerIds].sort();
+    return (
+      existingIds.length === nextIds.length &&
+      existingIds.every((id, index) => id === nextIds[index])
+    );
+  });
+
+  if (duplicateGame) {
+    return NextResponse.json(
+      { error: "This pod already has a pending game waiting for confirmation" },
+      { status: 409 }
+    );
+  }
+
   const game = await prisma.game.create({
     data: {
       seasonId: season.id,
@@ -113,6 +172,12 @@ export async function POST(req: Request) {
       },
       season: true,
     },
+  });
+
+  await createNotifications(playerIds, {
+    title: "Game confirmation requested",
+    body: `${session.user.name ?? "A player"} logged a pod and needs your confirmation.`,
+    href: `/games/${game.id}`,
   });
 
   return NextResponse.json(game, { status: 201 });

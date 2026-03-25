@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function POST(
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if ((session.user as any).role !== "ADMIN") {
+  if ((session.user as { role?: string }).role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -34,6 +35,15 @@ export async function POST(
     where: { id },
     data: { banned: !user.banned },
     select: { id: true, name: true, username: true, role: true, banned: true },
+  });
+
+  await writeAuditLog({
+    actorId: session.user.id,
+    action: updated.banned ? "user.ban" : "user.unban",
+    targetType: "user",
+    targetId: updated.id,
+    summary: `${updated.banned ? "Banned" : "Unbanned"} user ${updated.name}`,
+    details: { username: updated.username },
   });
 
   return NextResponse.json(updated);

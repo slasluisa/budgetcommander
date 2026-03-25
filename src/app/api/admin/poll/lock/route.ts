@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export async function POST(req: Request) {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if ((session.user as any).role !== "ADMIN") {
+  if ((session.user as { role?: string }).role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -64,6 +65,15 @@ export async function POST(req: Request) {
   const updated = await prisma.season.update({
     where: { id: season.id },
     data: { status: "ACTIVE", budgetCap },
+  });
+
+  await writeAuditLog({
+    actorId: session.user.id,
+    action: "poll.lock",
+    targetType: "season",
+    targetId: season.id,
+    summary: `Locked poll for ${season.name} at $${budgetCap}`,
+    details: { tiedOptions: winners.length > 1 ? winners : undefined },
   });
 
   return NextResponse.json(updated);

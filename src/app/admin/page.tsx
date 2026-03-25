@@ -7,11 +7,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const session = await auth();
-  if (!session?.user || (session.user as any).role !== "ADMIN") redirect("/");
+  if (!session?.user || (session.user as { role?: string }).role !== "ADMIN") redirect("/");
 
   const currentSeason = await prisma.season.findFirst({ orderBy: { createdAt: "desc" } });
 
-  const [pollVotes, allGames, disputedGames, users] = await Promise.all([
+  const [pollVotes, allGames, disputedGames, users, auditLogs] = await Promise.all([
     currentSeason
       ? prisma.pollVote.findMany({
           where: { seasonId: currentSeason.id },
@@ -46,6 +46,15 @@ export default async function AdminPage() {
       orderBy: { name: "asc" },
       select: { id: true, name: true, username: true, role: true, banned: true },
     }),
+    prisma.auditLog.findMany({
+      include: {
+        actor: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
   ]);
 
   return (
@@ -57,6 +66,7 @@ export default async function AdminPage() {
         allGames={JSON.parse(JSON.stringify(allGames))}
         disputedGames={JSON.parse(JSON.stringify(disputedGames))}
         users={users}
+        auditLogs={JSON.parse(JSON.stringify(auditLogs))}
         currentUserId={session.user.id!}
       />
     </div>

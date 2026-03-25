@@ -9,7 +9,7 @@ export default async function NewGamePage() {
   const session = await auth();
   if (!session?.user) redirect("/");
 
-  const [players, decks] = await Promise.all([
+  const [players, decks, user] = await Promise.all([
     prisma.user.findMany({
       where: {
         id: { not: session.user.id },
@@ -21,6 +21,10 @@ export default async function NewGamePage() {
     prisma.deck.findMany({
       where: { userId: session.user.id, archived: false },
     }),
+    prisma.user.findUnique({
+      where: { id: session.user.id! },
+      select: { defaultDeckId: true },
+    }),
   ]);
 
   return (
@@ -31,6 +35,7 @@ export default async function NewGamePage() {
         currentUserName={session.user.name ?? "You"}
         players={players}
         decks={decks}
+        initialDeckId={user?.defaultDeckId}
       />
     </div>
   );

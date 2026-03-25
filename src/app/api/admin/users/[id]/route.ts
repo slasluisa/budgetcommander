@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function DELETE(
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if ((session.user as any).role !== "ADMIN") {
+  if ((session.user as { role?: string }).role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -30,7 +31,7 @@ export async function DELETE(
     );
   }
 
-  if (id === (session.user as any).id) {
+  if (id === session.user.id) {
     return NextResponse.json(
       { error: "Cannot delete yourself" },
       { status: 400 }
@@ -38,6 +39,15 @@ export async function DELETE(
   }
 
   await prisma.user.delete({ where: { id } });
+
+  await writeAuditLog({
+    actorId: session.user.id,
+    action: "user.delete",
+    targetType: "user",
+    targetId: user.id,
+    summary: `Deleted user ${user.name}`,
+    details: { username: user.username, role: user.role },
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -14,15 +14,17 @@ export function LogGameForm({
   currentUserName,
   players,
   decks,
+  initialDeckId,
 }: {
   currentUserId: string;
   currentUserName: string;
   players: Player[];
   decks: Deck[];
+  initialDeckId?: string | null;
 }) {
   const router = useRouter();
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(["", "", ""]);
-  const [selectedDeck, setSelectedDeck] = useState("");
+  const [selectedDeck, setSelectedDeck] = useState(initialDeckId ?? "");
   const [winnerId, setWinnerId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -153,6 +155,12 @@ export function LogGameForm({
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {initialDeckId && (
+            <p className="text-xs text-muted-foreground">
+              Your default deck is pre-selected. You can change it before logging.
+            </p>
+          )}
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Logging..." : "Log Game"}

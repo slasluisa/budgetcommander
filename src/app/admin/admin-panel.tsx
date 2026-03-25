@@ -40,6 +40,15 @@ type DisputedGame = {
   players: { userId: string; user: { id: string; name: string }; isWinner: boolean }[];
 };
 type User = { id: string; name: string; username: string; role: string; banned: boolean };
+type AuditLog = {
+  id: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  summary: string;
+  createdAt: string;
+  actor: { id: string; name: string } | null;
+};
 
 export function AdminPanel({
   currentSeason,
@@ -47,6 +56,7 @@ export function AdminPanel({
   allGames,
   disputedGames,
   users,
+  auditLogs,
   currentUserId,
 }: {
   currentSeason: Season | null;
@@ -54,6 +64,7 @@ export function AdminPanel({
   allGames: GameRecord[];
   disputedGames: DisputedGame[];
   users: User[];
+  auditLogs: AuditLog[];
   currentUserId: string;
 }) {
   const router = useRouter();
@@ -68,6 +79,7 @@ export function AdminPanel({
         </TabsTrigger>
         <TabsTrigger value="games">Games</TabsTrigger>
         <TabsTrigger value="users">Users</TabsTrigger>
+        <TabsTrigger value="audit">Audit</TabsTrigger>
       </TabsList>
 
       <TabsContent value="budget">
@@ -88,6 +100,10 @@ export function AdminPanel({
 
       <TabsContent value="users">
         <UsersTab users={users} currentUserId={currentUserId} onRefresh={() => router.refresh()} />
+      </TabsContent>
+
+      <TabsContent value="audit">
+        <AuditTab logs={auditLogs} />
       </TabsContent>
     </Tabs>
   );
@@ -270,8 +286,8 @@ function PollsTab({
         body: JSON.stringify(choice ? { choice } : {}),
       });
       const data = await res.json();
-      if (res.status === 409 && data.tied) {
-        const pick = prompt(`Tie between: $${data.tied.join(", $")}. Enter the winning amount:`);
+      if (res.status === 409 && data.tiedOptions) {
+        const pick = prompt(`Tie between: $${data.tiedOptions.join(", $")}. Enter the winning amount:`);
         if (pick) await lockPoll(parseInt(pick));
         return;
       }
@@ -495,6 +511,8 @@ function GamesTab({ games, onRefresh }: { games: GameRecord[]; onRefresh: () => 
                     ? "border-green-500/30 text-green-400"
                     : game.status === "DISPUTED"
                       ? "border-red-500/30 text-red-400"
+                      : game.status === "CANCELLED"
+                        ? "border-border text-muted-foreground"
                       : "border-yellow-500/30 text-yellow-400"
                 }`}
               >
@@ -602,6 +620,44 @@ function UsersTab({ users, currentUserId, onRefresh }: { users: User[]; currentU
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AuditTab({ logs }: { logs: AuditLog[] }) {
+  if (logs.length === 0) {
+    return (
+      <Card className="border-border bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-6 text-center text-muted-foreground">
+          No audit log entries yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-border bg-card/50 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle>Admin Audit Log</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {logs.map((log) => (
+          <div key={log.id} className="rounded-lg bg-muted/20 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="font-medium">{log.summary}</p>
+                <p className="text-xs text-muted-foreground">
+                  {log.actor?.name ?? "System"} • {log.action} • {log.targetType}
+                  {log.targetId ? `:${log.targetId}` : ""}
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(log.createdAt).toLocaleString()}
+              </span>
             </div>
           </div>
         ))}

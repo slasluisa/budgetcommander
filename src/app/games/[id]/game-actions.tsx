@@ -7,12 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Deck = { id: string; name: string; commander: string };
 
-export function GameActions({ gameId, decks }: { gameId: string; decks: Deck[] }) {
+export function GameActions({
+  gameId,
+  decks,
+  initialDeckId,
+}: {
+  gameId: string;
+  decks: Deck[];
+  initialDeckId?: string | null;
+}) {
   const router = useRouter();
-  const [selectedDeck, setSelectedDeck] = useState<string>("");
+  const [selectedDeck, setSelectedDeck] = useState<string>(initialDeckId ?? "");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleConfirm() {
+    setError(null);
     setLoading(true);
     try {
       const res = await fetch(`/api/games/${gameId}/confirm`, {
@@ -20,19 +30,30 @@ export function GameActions({ gameId, decks }: { gameId: string; decks: Deck[] }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deckId: selectedDeck || null }),
       });
-      if (res.ok) router.refresh();
+      if (res.ok) {
+        router.refresh();
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? "Could not confirm the game");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDispute() {
+    setError(null);
     setLoading(true);
     try {
       const res = await fetch(`/api/games/${gameId}/dispute`, {
         method: "POST",
       });
-      if (res.ok) router.refresh();
+      if (res.ok) {
+        router.refresh();
+        return;
+      }
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? "Could not dispute the game");
     } finally {
       setLoading(false);
     }
@@ -72,6 +93,7 @@ export function GameActions({ gameId, decks }: { gameId: string; decks: Deck[] }
             Dispute
           </Button>
         </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
       </CardContent>
     </Card>
   );
