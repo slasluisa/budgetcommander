@@ -284,7 +284,7 @@ function PollsTab({
   async function deleteVote(voteId: string) {
     setLoading(true);
     try {
-      await fetch(`/api/admin/votes/${voteId}`, { method: "DELETE" });
+      await fetch(`/api/admin/poll/votes/${voteId}`, { method: "DELETE" });
       onRefresh();
     } finally {
       setLoading(false);
