@@ -132,7 +132,7 @@ export default async function Home() {
                 title={session?.user ? "Cast Your Vote" : "Live Poll Results"}
                 description={
                   session?.user
-                    ? "Pick your budget cap and watch the results update here."
+                    ? "Pick your budget cap"
                     : "Create an account or sign in from this page to join the vote."
                 }
                 className="border-primary/20 bg-background/70"
