@@ -48,7 +48,7 @@ model Deck {
   archived     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   gamePlayers GamePlayer[]
 }
 
@@ -69,8 +69,8 @@ model PollVote {
   userId   String
   choice   Int
 
-  season Season @relation(fields: [seasonId], references: [id])
-  user   User   @relation(fields: [userId], references: [id])
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([seasonId, userId])
 }
@@ -82,8 +82,8 @@ model Game {
   status      GameStatus @default(PENDING)
   createdAt   DateTime   @default(now())
 
-  season    Season       @relation(fields: [seasonId], references: [id])
-  createdBy User         @relation("GameCreator", fields: [createdById], references: [id])
+  season    Season       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  createdBy User         @relation("GameCreator", fields: [createdById], references: [id], onDelete: Cascade)
   players   GamePlayer[]
 }
 
@@ -95,9 +95,9 @@ model GamePlayer {
   isWinner  Boolean @default(false)
   confirmed Boolean @default(false)
 
-  game Game  @relation(fields: [gameId], references: [id])
-  user User  @relation(fields: [userId], references: [id])
-  deck Deck? @relation(fields: [deckId], references: [id])
+  game Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck Deck? @relation(fields: [deckId], references: [id], onDelete: SetNull)
 
   @@unique([gameId, userId])
 }
