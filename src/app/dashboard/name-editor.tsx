@@ -11,6 +11,7 @@ import { toast } from "sonner";
 export function NameEditor({ initialName }: { initialName: string }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(initialName);
+  const [savedName, setSavedName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const { update } = useSession();
   const router = useRouter();
@@ -32,6 +33,8 @@ export function NameEditor({ initialName }: { initialName: string }) {
         toast.error(data.error || "Failed to update name");
         return;
       }
+      setName(trimmed);
+      setSavedName(trimmed);
       await update();
       router.refresh();
       setEditing(false);
@@ -44,14 +47,14 @@ export function NameEditor({ initialName }: { initialName: string }) {
   }
 
   function handleCancel() {
-    setName(initialName);
+    setName(savedName);
     setEditing(false);
   }
 
   if (!editing) {
     return (
       <div className="flex items-center gap-2">
-        <h1 className="text-3xl font-bold">{initialName}</h1>
+        <h1 className="text-3xl font-bold">{savedName}</h1>
         <Button
           variant="ghost"
           size="sm"
