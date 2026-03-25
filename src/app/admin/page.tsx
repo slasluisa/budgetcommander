@@ -11,14 +11,25 @@ export default async function AdminPage() {
 
   const currentSeason = await prisma.season.findFirst({ orderBy: { createdAt: "desc" } });
 
-  const [rawVotes, disputedGames, users] = await Promise.all([
+  const [pollVotes, allGames, disputedGames, users] = await Promise.all([
     currentSeason
-      ? prisma.pollVote.groupBy({
-          by: ["choice"],
+      ? prisma.pollVote.findMany({
           where: { seasonId: currentSeason.id },
-          _count: { choice: true },
+          include: { user: { select: { id: true, name: true } } },
+          orderBy: { choice: "asc" },
         })
       : Promise.resolve([]),
+    prisma.game.findMany({
+      include: {
+        players: {
+          include: {
+            user: { select: { id: true, name: true } },
+          },
+        },
+        season: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
     prisma.game.findMany({
       where: { status: "DISPUTED" },
       include: {
@@ -37,16 +48,16 @@ export default async function AdminPage() {
     }),
   ]);
 
-  const voteCounts = rawVotes.map((v) => ({ choice: v.choice, count: v._count.choice }));
-
   return (
     <div>
       <h1 className="mb-6 text-3xl font-bold">Admin Panel</h1>
       <AdminPanel
         currentSeason={currentSeason ? JSON.parse(JSON.stringify(currentSeason)) : null}
-        voteCounts={voteCounts}
+        pollVotes={JSON.parse(JSON.stringify(pollVotes))}
+        allGames={JSON.parse(JSON.stringify(allGames))}
         disputedGames={JSON.parse(JSON.stringify(disputedGames))}
         users={users}
+        currentUserId={session.user.id!}
       />
     </div>
   );
