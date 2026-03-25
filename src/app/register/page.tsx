@@ -21,7 +21,7 @@ export default function RegisterPage() {
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
+    const username = formData.get("username") as string;
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
@@ -34,7 +34,7 @@ export default function RegisterPage() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, username, password }),
     });
 
     if (!res.ok) {
@@ -46,7 +46,7 @@ export default function RegisterPage() {
 
     // Auto sign-in after registration
     const signInRes = await signIn("credentials", {
-      email,
+      username,
       password,
       redirect: false,
     });
@@ -75,8 +75,8 @@ export default function RegisterPage() {
               <Input id="name" name="name" type="text" required autoComplete="name" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required autoComplete="email" />
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" name="username" type="text" required autoComplete="username" pattern="^[a-zA-Z0-9_]{3,20}$" title="3-20 characters, letters, numbers, and underscores only" />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Password</Label>
