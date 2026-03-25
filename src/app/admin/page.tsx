@@ -44,7 +44,7 @@ export default async function AdminPage() {
     }),
     prisma.user.findMany({
       orderBy: { name: "asc" },
-      select: { id: true, name: true, email: true, role: true, banned: true },
+      select: { id: true, name: true, username: true, role: true, banned: true },
     }),
   ]);
 

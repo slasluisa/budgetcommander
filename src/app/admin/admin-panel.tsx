@@ -39,7 +39,7 @@ type DisputedGame = {
   season: { name: string };
   players: { userId: string; user: { id: string; name: string }; isWinner: boolean }[];
 };
-type User = { id: string; name: string; email: string; role: string; banned: boolean };
+type User = { id: string; name: string; username: string; role: string; banned: boolean };
 
 export function AdminPanel({
   currentSeason,
@@ -565,7 +565,7 @@ function UsersTab({ users, currentUserId, onRefresh }: { users: User[]; currentU
           <div key={user.id} className="flex items-center justify-between rounded-lg bg-muted/20 p-3">
             <div>
               <span className="font-medium">{user.name}</span>
-              <span className="ml-2 text-xs text-muted-foreground">{user.email}</span>
+              <span className="ml-2 text-xs text-muted-foreground">{user.username}</span>
               {user.role === "ADMIN" && (
                 <Badge className="ml-2 bg-primary/20 text-primary">Admin</Badge>
               )}

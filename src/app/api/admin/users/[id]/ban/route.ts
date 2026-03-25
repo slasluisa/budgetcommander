@@ -33,7 +33,7 @@ export async function POST(
   const updated = await prisma.user.update({
     where: { id },
     data: { banned: !user.banned },
-    select: { id: true, name: true, email: true, role: true, banned: true },
+    select: { id: true, name: true, username: true, role: true, banned: true },
   });
 
   return NextResponse.json(updated);
