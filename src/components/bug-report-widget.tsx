@@ -49,11 +49,12 @@ export function BugReportWidget() {
       {!expanded ? (
         <Button
           type="button"
-          className="pointer-events-auto h-10 rounded-full px-4 shadow-lg shadow-black/25"
+          aria-label="Report a bug"
+          className="pointer-events-auto h-10 w-10 rounded-full px-0 shadow-lg shadow-black/25 md:w-auto md:px-4"
           onClick={() => setExpanded(true)}
         >
-          <Bug className="mr-2 h-4 w-4" />
-          Report
+          <Bug className="h-4 w-4 md:mr-2" />
+          <span className="hidden md:inline">Report</span>
         </Button>
       ) : (
         <div className="pointer-events-auto w-[min(24rem,calc(100vw-1.5rem))] rounded-2xl border border-border bg-card/95 shadow-2xl shadow-black/20 backdrop-blur-sm">
