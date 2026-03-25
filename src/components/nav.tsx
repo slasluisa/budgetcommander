@@ -1,20 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
-import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Plus } from "lucide-react";
 
 export function Nav() {
   const { data: session } = useSession();
-  const router = useRouter();
 
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm">
@@ -24,70 +17,71 @@ export function Nav() {
             Budget Commander
           </Link>
           <div className="hidden gap-4 md:flex">
-            <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground">
-              Leaderboard
-            </Link>
-            <Link href="/games" className="text-sm text-muted-foreground hover:text-foreground">
+            <Link
+              href="/games"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
               Games
             </Link>
-            <Link href="/poll" className="text-sm text-muted-foreground hover:text-foreground">
-              Poll
+            <Link
+              href="/leaderboard"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Standings
             </Link>
+            {(session?.user as any)?.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Admin
+              </Link>
+            )}
           </div>
         </div>
 
-        <div>
+        <div className="flex items-center gap-3">
           {session?.user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button variant="ghost" className="flex items-center gap-2" />
+            <>
+              <Link
+                href="/games/new"
+                className={
+                  buttonVariants() +
+                  " hidden gap-1.5 bg-gradient-to-r from-primary to-secondary md:inline-flex"
                 }
               >
+                <Plus className="h-4 w-4" />
+                Log Game
+              </Link>
+              <Link href="/profile">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={session.user.image ?? undefined} />
-                  <AvatarFallback>{session.user.name?.[0] ?? "?"}</AvatarFallback>
+                  <AvatarFallback>
+                    {session.user.name?.[0] ?? "?"}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="hidden text-sm md:inline">{session.user.name}</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card border-border">
-                <DropdownMenuItem onClick={() => router.push("/dashboard")}>
-                  Dashboard
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/decks/new")}>
-                  Register Deck
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/games/new")}>
-                  Log Game
-                </DropdownMenuItem>
-                {(session.user as any).role === "ADMIN" && (
-                  <DropdownMenuItem onClick={() => router.push("/admin")}>
-                    Admin
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => signOut()}>
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+            </>
           ) : (
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push("/login")}
-                className="border-primary/50 text-primary hover:bg-primary/10"
+              <Link
+                href="/login"
+                className={
+                  buttonVariants({ variant: "outline", size: "sm" }) +
+                  " border-primary/50 text-primary hover:bg-primary/10"
+                }
               >
                 Sign In
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push("/register")}
-                className="border-secondary/50 text-secondary hover:bg-secondary/10"
+              </Link>
+              <Link
+                href="/register"
+                className={
+                  buttonVariants({ variant: "outline", size: "sm" }) +
+                  " border-secondary/50 text-secondary hover:bg-secondary/10"
+                }
               >
                 Register
-              </Button>
+              </Link>
             </div>
           )}
         </div>
