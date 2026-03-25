@@ -15,6 +15,8 @@ UI-only reorganization. The data model (`Season` with `status: POLLING | ACTIVE 
 Current: **Seasons | Disputes | Users**
 New: **Budget | Polls | Disputes | Users**
 
+Both tabs focus on the **current season** (the most recent non-COMPLETED season, or the most recent COMPLETED one if none is active). Historical seasons are not listed — the admin manages one season at a time.
+
 ### Budget Tab
 
 Owns the season lifecycle: creation, budget visibility, and ending seasons.
@@ -28,6 +30,8 @@ Owns the season lifecycle: creation, budget visibility, and ending seasons.
 | Season is `ACTIVE` | Season name, budget cap displayed prominently (e.g. "$50 Budget"), End Season button |
 | Most recent season is `COMPLETED` | Show completed season info, Create Season button for a new one |
 
+Ending a `POLLING` season is allowed — it skips the vote and completes the season without setting a budget.
+
 ### Polls Tab
 
 Manages the voting phase. Read-only view when no poll is active.
@@ -36,15 +40,16 @@ Manages the voting phase. Read-only view when no poll is active.
 
 | Condition | Display |
 |---|---|
-| Season in `POLLING` | Vote breakdown (counts per $20, $50, $100 option), Lock Poll button |
+| Season in `POLLING` | Vote breakdown (counts per $20, $50, $100 option), Lock Poll button. Tie-breaking prompt on 409 stays here. |
 | No season polling | Empty state: "No active poll. Create a season from the Budget tab to start one." |
-| Season is `ACTIVE` or `COMPLETED` | Final poll results displayed read-only (what was voted, what won) |
+| Season is `ACTIVE` or `COMPLETED` | Final poll results for the current/most recent season displayed read-only (vote counts, winning option, budget cap set) |
 
 ### Behavior
 
 - **Locking a poll** (from Polls tab) still auto-sets the season's `budgetCap` and transitions status from `POLLING` to `ACTIVE`. The Budget tab reflects the new value immediately.
 - **Creating a season** (from Budget tab) creates it in `POLLING` status, same as today.
 - **Ending a season** (from Budget tab) sets status to `COMPLETED`, same as today.
+- **Tie-breaking** on poll lock (409 response with tied options) is handled in the Polls tab with the existing prompt dialog.
 
 ### What Does Not Change
 
@@ -55,5 +60,5 @@ Manages the voting phase. Read-only view when no poll is active.
 
 ## Files to Modify
 
-- `src/app/admin/admin-panel.tsx` — split Seasons tab into Budget and Polls tabs, restructure content
-- `src/app/admin/page.tsx` — may need to pass poll vote data separately if not already available
+- `src/app/admin/admin-panel.tsx` — split Seasons tab into Budget and Polls tabs, restructure content. Move tie-breaking prompt to Polls tab.
+- `src/app/admin/page.tsx` — fetch poll vote aggregation data (counts per choice for the current season) and pass to `admin-panel.tsx`. Currently poll votes are not fetched here.
