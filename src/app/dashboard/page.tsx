@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { NameEditor } from "./name-editor";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,11 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/");
 
   const userId = session.user.id!;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
 
   const [pendingGames, decks, confirmedGames] = await Promise.all([
     prisma.game.findMany({
@@ -46,7 +52,7 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <NameEditor initialName={user?.name ?? "User"} />
         <div className="flex gap-2">
           <Link href="/games/new" className={buttonVariants()}>
             Log Game
