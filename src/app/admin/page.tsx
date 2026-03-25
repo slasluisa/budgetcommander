@@ -11,7 +11,7 @@ export default async function AdminPage() {
 
   const currentSeason = await prisma.season.findFirst({ orderBy: { createdAt: "desc" } });
 
-  const [pollVotes, allGames, disputedGames, users, auditLogs] = await Promise.all([
+  const [pollVotes, allGames, disputedGames, users, auditLogs, bugReports] = await Promise.all([
     currentSeason
       ? prisma.pollVote.findMany({
           where: { seasonId: currentSeason.id },
@@ -55,6 +55,15 @@ export default async function AdminPage() {
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
+    prisma.bugReport.findMany({
+      include: {
+        user: {
+          select: { id: true, name: true, username: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
   ]);
 
   return (
@@ -67,6 +76,7 @@ export default async function AdminPage() {
         disputedGames={JSON.parse(JSON.stringify(disputedGames))}
         users={users}
         auditLogs={JSON.parse(JSON.stringify(auditLogs))}
+        bugReports={JSON.parse(JSON.stringify(bugReports))}
         currentUserId={session.user.id!}
       />
     </div>

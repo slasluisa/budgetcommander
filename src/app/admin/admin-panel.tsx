@@ -49,6 +49,13 @@ type AuditLog = {
   createdAt: string;
   actor: { id: string; name: string } | null;
 };
+type BugReport = {
+  id: string;
+  description: string;
+  pagePath: string | null;
+  createdAt: string;
+  user: { id: string; name: string; username: string } | null;
+};
 
 export function AdminPanel({
   currentSeason,
@@ -57,6 +64,7 @@ export function AdminPanel({
   disputedGames,
   users,
   auditLogs,
+  bugReports,
   currentUserId,
 }: {
   currentSeason: Season | null;
@@ -65,6 +73,7 @@ export function AdminPanel({
   disputedGames: DisputedGame[];
   users: User[];
   auditLogs: AuditLog[];
+  bugReports: BugReport[];
   currentUserId: string;
 }) {
   const router = useRouter();
@@ -79,6 +88,9 @@ export function AdminPanel({
         </TabsTrigger>
         <TabsTrigger value="games">Games</TabsTrigger>
         <TabsTrigger value="users">Users</TabsTrigger>
+        <TabsTrigger value="bugs">
+          Bugs {bugReports.length > 0 && `(${bugReports.length})`}
+        </TabsTrigger>
         <TabsTrigger value="audit">Audit</TabsTrigger>
       </TabsList>
 
@@ -100,6 +112,10 @@ export function AdminPanel({
 
       <TabsContent value="users">
         <UsersTab users={users} currentUserId={currentUserId} onRefresh={() => router.refresh()} />
+      </TabsContent>
+
+      <TabsContent value="bugs">
+        <BugReportsTab bugReports={bugReports} />
       </TabsContent>
 
       <TabsContent value="audit">
@@ -659,6 +675,55 @@ function AuditTab({ logs }: { logs: AuditLog[] }) {
                 {new Date(log.createdAt).toLocaleString()}
               </span>
             </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function BugReportsTab({ bugReports }: { bugReports: BugReport[] }) {
+  if (bugReports.length === 0) {
+    return (
+      <Card className="border-border bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-6 text-center text-muted-foreground">
+          No bug reports yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-border bg-card/50 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle>Bug Reports</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {bugReports.map((bugReport) => (
+          <div key={bugReport.id} className="rounded-lg bg-muted/20 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="font-medium">
+                  {bugReport.user?.name ?? "Anonymous report"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {bugReport.user?.username
+                    ? `@${bugReport.user.username}`
+                    : "No signed-in user attached"}
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(bugReport.createdAt).toLocaleString()}
+              </span>
+            </div>
+            {bugReport.pagePath && (
+              <p className="mt-3 text-xs text-muted-foreground">
+                Page: {bugReport.pagePath}
+              </p>
+            )}
+            <p className="mt-3 whitespace-pre-wrap text-sm leading-6">
+              {bugReport.description}
+            </p>
           </div>
         ))}
       </CardContent>

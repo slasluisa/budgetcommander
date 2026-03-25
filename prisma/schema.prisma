@@ -42,6 +42,7 @@ model User {
   gamesCreated  Game[]         @relation("GameCreator")
   notifications Notification[]
   auditLogs     AuditLog[]     @relation("AuditActor")
+  bugReports    BugReport[]
 }
 
 model Deck {
@@ -133,4 +134,17 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+}
+
+model BugReport {
+  id          String   @id @default(cuid())
+  userId      String?
+  description String
+  pagePath    String?
+  createdAt   DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }
