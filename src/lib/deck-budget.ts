@@ -30,17 +30,25 @@ export async function validateDeckAgainstLeagueBudget(
     select: { name: true, budgetCap: true },
   });
 
-  if (activeSeason?.budgetCap == null) {
-    return { ok: true };
-  }
-
-  const activeBudgetSeason: ActiveBudgetSeason = {
-    name: activeSeason.name,
-    budgetCap: activeSeason.budgetCap,
-  };
-
   const archidektDeckUrl = parseArchidektDeckUrl(externalLink);
+  const activeBudgetSeason =
+    activeSeason?.budgetCap != null
+      ? {
+          name: activeSeason.name,
+          budgetCap: activeSeason.budgetCap,
+        }
+      : null;
+
   if (!archidektDeckUrl) {
+    if (!activeBudgetSeason) {
+      return {
+        ok: false,
+        status: 400,
+        error:
+          "Deck registration currently requires a public Archidekt deck link so we can read the list and detect your commander.",
+      };
+    }
+
     return {
       ok: false,
       status: 400,
@@ -48,23 +56,32 @@ export async function validateDeckAgainstLeagueBudget(
     };
   }
 
-  const deckPrice = await fetchArchidektDeckPrice(
-    archidektDeckUrl,
-    activeBudgetSeason
-  );
-  if (!deckPrice.ok) {
-    return deckPrice;
+  const deckInfo = await fetchArchidektDeckInfo(archidektDeckUrl, activeBudgetSeason);
+  if (!deckInfo.ok) {
+    return deckInfo;
   }
 
-  if (deckPrice.priceUsd > activeBudgetSeason.budgetCap) {
+  if (activeBudgetSeason && deckInfo.priceUsd == null) {
     return {
       ok: false,
-      status: 400,
-      error: `Deck costs ${formatUsd(deckPrice.priceUsd)}, but the ${activeBudgetSeason.name} budget cap is ${formatUsd(activeBudgetSeason.budgetCap)}.`,
+      status: 502,
+      error: `Archidekt did not return a deck price we could validate. Make sure the deck is public and try again before submitting for the ${activeBudgetSeason.name} budget cap.`,
     };
   }
 
-  return { ok: true, commander: deckPrice.commander };
+  if (
+    activeBudgetSeason &&
+    deckInfo.priceUsd != null &&
+    deckInfo.priceUsd > activeBudgetSeason.budgetCap
+  ) {
+    return {
+      ok: false,
+      status: 400,
+      error: `Deck costs ${formatUsd(deckInfo.priceUsd)}, but the ${activeBudgetSeason.name} budget cap is ${formatUsd(activeBudgetSeason.budgetCap)}.`,
+    };
+  }
+
+  return { ok: true, commander: deckInfo.commander };
 }
 
 export function formatUsd(amount: number) {
@@ -102,11 +119,11 @@ function parseArchidektDeckUrl(externalLink: string) {
   return url.toString();
 }
 
-async function fetchArchidektDeckPrice(
+async function fetchArchidektDeckInfo(
   deckUrl: string,
-  activeSeason: ActiveBudgetSeason
+  activeSeason: ActiveBudgetSeason | null
 ): Promise<
-  | { ok: true; priceUsd: number; commander: string }
+  | { ok: true; priceUsd: number | null; commander: string }
   | { ok: false; error: string; status: 400 | 502 }
 > {
   let response: Response;
@@ -124,7 +141,10 @@ async function fetchArchidektDeckPrice(
     return {
       ok: false,
       status: 502,
-      error: `Couldn't verify this deck's price against the ${activeSeason.name} budget cap right now. Try again in a moment.`,
+      error:
+        activeSeason?.budgetCap != null
+          ? `Couldn't verify this deck's price against the ${activeSeason.name} budget cap right now. Try again in a moment.`
+          : "Couldn't read that Archidekt deck right now. Try again in a moment.",
     };
   }
 
@@ -136,7 +156,9 @@ async function fetchArchidektDeckPrice(
       error:
         response.status === 404
           ? "That Archidekt deck could not be found. Make sure the deck is public and the link is correct."
-          : `Archidekt price verification is unavailable right now, so this deck couldn't be checked against the ${activeSeason.name} budget cap.`,
+          : activeSeason?.budgetCap != null
+            ? `Archidekt price verification is unavailable right now, so this deck couldn't be checked against the ${activeSeason.name} budget cap.`
+            : "Archidekt deck verification is unavailable right now, so this deck couldn't be read.",
     };
   }
 
@@ -144,12 +166,14 @@ async function fetchArchidektDeckPrice(
   const priceUsd = extractArchidektDeckTcgPriceFromHtml(html);
   const commanders = extractArchidektCommanderNamesFromHtml(html);
 
-  if (priceUsd === null) {
+  if (priceUsd === null && commanders.length === 0) {
     return {
       ok: false,
-      status: 502,
+      status: activeSeason?.budgetCap != null ? 502 : 400,
       error:
-        "Archidekt did not return a deck price we could validate. Make sure the deck is public and try again.",
+        activeSeason?.budgetCap != null
+          ? "Archidekt did not return deck data we could validate. Make sure the deck is public and try again."
+          : "That Archidekt deck could not be read. Make sure the deck is public and try again.",
     };
   }
 
