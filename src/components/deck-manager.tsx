@@ -109,7 +109,7 @@ export function DeckManager({
       {activeSeasonBudgetCap != null ? (
         <p className="text-sm text-muted-foreground">
           {activeSeasonLabel} is capped at {formatUsd(activeSeasonBudgetCap)}. Deck links must
-          point to a public Moxfield list for budget validation.
+          point to a public Archidekt list for budget validation.
         </p>
       ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -144,7 +144,7 @@ export function DeckManager({
                         }))
                       }
                       type="url"
-                      placeholder="https://www.moxfield.com/decks/..."
+                      placeholder="https://archidekt.com/decks/..."
                       className="bg-muted border-border"
                     />
                   </div>

@@ -80,13 +80,13 @@ export function DeckForm({
               name="externalLink"
               type="url"
               required
-              placeholder="https://www.moxfield.com/decks/..."
+              placeholder="https://archidekt.com/decks/..."
               className="bg-muted border-border"
             />
             {activeBudgetCap != null ? (
               <p className="text-sm text-muted-foreground">
                 {activeSeasonName} is capped at {formatUsd(activeBudgetCap)}. Use a public
-                Moxfield deck link so we can validate it automatically.
+                Archidekt deck link so we can validate it automatically.
               </p>
             ) : null}
           </div>
