@@ -125,7 +125,17 @@ export function DeckManager({
   }
 
   if (localDecks.length === 0) {
-    return <p className="text-muted-foreground">No decks registered yet.</p>;
+    return (
+      <div className="flex flex-col items-center py-6 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <p className="font-medium">No decks yet</p>
+        <p className="mt-1 max-w-xs text-sm text-muted-foreground">
+          Register an Archidekt decklist to start logging games and tracking your stats.
+        </p>
+      </div>
+    );
   }
 
   return (

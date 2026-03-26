@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { DeckManager } from "@/components/deck-manager";
 import { NotificationsPanel } from "@/components/notifications-panel";
 import { buildPlayerAchievements, summarizeWins } from "@/lib/league";
+import { GettingStartedGuide } from "@/components/getting-started-guide";
 
 export const dynamic = "force-dynamic";
 
@@ -142,6 +143,16 @@ export default async function ProfilePage() {
           )}
         </div>
       </div>
+
+      <GettingStartedGuide
+        hasDecks={decks.length > 0}
+        hasGames={confirmedEntries.length > 0}
+        activeSeason={
+          activeSeason?.status === "ACTIVE" && activeSeason.budgetCap != null
+            ? { name: activeSeason.name, budgetCap: activeSeason.budgetCap }
+            : null
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="border-border bg-card/50 backdrop-blur-sm text-center">

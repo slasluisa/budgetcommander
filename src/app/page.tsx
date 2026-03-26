@@ -33,6 +33,11 @@ export default async function Home() {
     }),
   ]);
 
+  // Check if logged-in user has any decks (for onboarding CTA)
+  const userDeckCount = session?.user?.id
+    ? await prisma.deck.count({ where: { userId: session.user.id, archived: false } })
+    : null;
+
   // Top 5 players from leaderboard
   const [topPlayers, openPollResults] = await Promise.all([
     currentSeason
@@ -139,6 +144,31 @@ export default async function Home() {
               />
             </div>
           </section>
+        ) : null}
+        {session?.user && userDeckCount === 0 ? (
+          <div className="relative mt-8 w-full max-w-md rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/[0.08] via-card/60 to-secondary/[0.06] px-6 py-5 text-left shadow-[0_12px_40px_rgba(124,58,237,0.12)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">
+              Next Step
+            </p>
+            <h3 className="mt-1.5 text-lg font-bold">Register your first deck</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Paste an Archidekt link and you&apos;re ready to play. Head to your profile to get set up.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/decks/new"
+                className={buttonVariants({ size: "sm" }) + " bg-gradient-to-r from-primary to-secondary"}
+              >
+                Register a Deck
+              </Link>
+              <Link
+                href="/profile"
+                className={buttonVariants({ variant: "outline", size: "sm" }) + " border-border"}
+              >
+                Go to Profile
+              </Link>
+            </div>
+          </div>
         ) : null}
         <div className="relative mt-6 flex flex-wrap justify-center gap-3">
           <Link href="/leaderboard" className={buttonVariants({ variant: "outline" }) + " border-border"}>
