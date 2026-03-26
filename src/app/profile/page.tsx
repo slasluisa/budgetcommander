@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { NameEditor } from "./name-editor";
 import { SignOutButton } from "./sign-out-button";
+import { PasswordChanger } from "./password-changer";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -297,7 +298,15 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
 
-      <SignOutButton />
+      <Card className="border-border bg-card/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <PasswordChanger />
+          <SignOutButton />
+        </CardContent>
+      </Card>
     </div>
   );
 }
