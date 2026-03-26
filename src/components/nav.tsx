@@ -43,6 +43,18 @@ export function Nav() {
             >
               Seasons
             </Link>
+            <Link
+              href="/commanders"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Meta
+            </Link>
+            <Link
+              href="/pods"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Pods
+            </Link>
             {userRole === "ADMIN" && (
               <Link
                 href="/admin"

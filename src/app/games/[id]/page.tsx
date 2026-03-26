@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameActions } from "./game-actions";
 import { PendingGameTools } from "@/components/pending-game-tools";
+import { RecapForm } from "@/components/recap-form";
+import { PropForm } from "@/components/prop-form";
 import { formatUsdFromCents } from "@/lib/currency";
 import { canSendReminder, getPendingAgeLabel, isGameOverdue } from "@/lib/league";
 
@@ -37,6 +39,17 @@ export default async function GameDetailPage({
         },
       },
       season: { select: { name: true, budgetCap: true } },
+      recaps: {
+        include: { user: { select: { id: true, name: true, avatar: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+      props: {
+        include: {
+          giver: { select: { id: true, name: true } },
+          receiver: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -193,6 +206,69 @@ export default async function GameDetailPage({
           canRemind={canSendReminder(game.lastReminderAt)}
           lastReminderAt={game.lastReminderAt?.toISOString() ?? null}
         />
+      )}
+
+      {game.status === "CONFIRMED" && (
+        <>
+          <Card className="mt-4 border-border bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle>Recaps</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {game.recaps.length > 0 ? (
+                game.recaps.map((recap) => (
+                  <div key={recap.id} className="rounded-lg bg-muted/20 p-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={recap.user.avatar ?? undefined} />
+                        <AvatarFallback className="text-xs">{recap.user.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{recap.user.name}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">{recap.text}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No recaps yet.</p>
+              )}
+              {currentPlayer && !game.recaps.some((r) => r.user.id === session!.user!.id) && (
+                <RecapForm gameId={game.id} />
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mt-4 border-border bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle>Props</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {game.props.length > 0 ? (
+                game.props.map((prop) => (
+                  <div key={prop.id} className="flex items-center justify-between rounded-lg bg-muted/20 p-3">
+                    <span className="text-sm">
+                      <span className="font-medium">{prop.giver.name}</span>
+                      <span className="text-muted-foreground"> gave </span>
+                      <span className="font-medium">{prop.receiver.name}</span>
+                    </span>
+                    <Badge variant="outline" className="border-primary/30 text-primary">
+                      {prop.category.replace(/_/g, " ")}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No props yet.</p>
+              )}
+              {currentPlayer && !game.props.some((p) => p.giver.id === session!.user!.id) && (
+                <PropForm
+                  gameId={game.id}
+                  otherPlayers={game.players
+                    .filter((p) => p.user.id !== session!.user!.id)
+                    .map((p) => ({ id: p.user.id, name: p.user.name }))}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

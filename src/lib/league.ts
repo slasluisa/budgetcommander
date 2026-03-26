@@ -76,3 +76,52 @@ export function buildPlayerAchievements(input: {
 
   return achievements.slice(0, 4);
 }
+
+export type RivalryRecord = {
+  opponentId: string;
+  opponentName: string;
+  opponentAvatar: string | null;
+  wins: number;
+  losses: number;
+  games: number;
+  gameIds: string[];
+};
+
+export function buildRivalries(
+  gamePlayers: Array<{
+    isWinner: boolean;
+    game: {
+      id: string;
+      players: Array<{
+        userId: string;
+        user: { id: string; name: string; avatar?: string | null };
+        isWinner: boolean;
+      }>;
+    };
+  }>,
+  playerId: string
+): RivalryRecord[] {
+  const map = new Map<string, RivalryRecord>();
+
+  for (const gp of gamePlayers) {
+    for (const opponent of gp.game.players) {
+      if (opponent.userId === playerId) continue;
+      const record = map.get(opponent.userId) ?? {
+        opponentId: opponent.userId,
+        opponentName: opponent.user.name,
+        opponentAvatar: opponent.user.avatar ?? null,
+        wins: 0,
+        losses: 0,
+        games: 0,
+        gameIds: [],
+      };
+      record.games++;
+      if (gp.isWinner) record.wins++;
+      else record.losses++;
+      record.gameIds.push(gp.game.id);
+      map.set(opponent.userId, record);
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.games - a.games);
+}

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { formatUsdFromCents } from "@/lib/currency";
-import { buildPlayerAchievements, summarizeWins } from "@/lib/league";
+import { buildPlayerAchievements, buildRivalries, summarizeWins } from "@/lib/league";
+import { RivalryList } from "@/components/rivalry-list";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export default async function PlayerProfilePage({
               season: { select: { name: true } },
               players: {
                 include: {
-                  user: { select: { id: true, name: true } },
+                  user: { select: { id: true, name: true, avatar: true } },
                   deck: { select: { commander: true } },
                 },
               },
@@ -113,6 +114,17 @@ export default async function PlayerProfilePage({
     favoriteCommander,
     uniqueDecks: deckStats.length,
   });
+  const rivalries = buildRivalries(user.gamePlayers, user.id);
+
+  const propsReceived = await prisma.gameProp.findMany({
+    where: { receiverId: id },
+    select: { category: true },
+  });
+  const propCounts = new Map<string, number>();
+  for (const prop of propsReceived) {
+    propCounts.set(prop.category, (propCounts.get(prop.category) ?? 0) + 1);
+  }
+  const propEntries = Array.from(propCounts.entries()).sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -229,6 +241,17 @@ export default async function PlayerProfilePage({
         </Card>
       </div>
 
+      {rivalries.length > 0 && (
+        <Card className="border-border bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Rivalries</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RivalryList rivalries={rivalries} />
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-border bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Game Log</CardTitle>
@@ -266,6 +289,21 @@ export default async function PlayerProfilePage({
           )}
         </CardContent>
       </Card>
+
+      {propEntries.length > 0 && (
+        <Card className="border-border bg-card/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle>Props Received</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {propEntries.map(([category, count]) => (
+              <Badge key={category} variant="outline" className="border-primary/30 text-primary">
+                {category.replace(/_/g, " ")} x{count}
+              </Badge>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-border bg-card/50 backdrop-blur-sm">
         <CardHeader>
