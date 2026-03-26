@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 function formatUsd(amount: number) {
   return new Intl.NumberFormat("en-US", {
@@ -61,6 +67,10 @@ export function DeckForm({
     <Card className="border-border bg-card/50 backdrop-blur-sm">
       <CardHeader>
         <CardTitle>Register a New Deck</CardTitle>
+        <CardDescription>
+          Add a public Archidekt list and we&apos;ll use it to verify the deck when you
+          submit.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,13 +88,27 @@ export function DeckForm({
               placeholder="https://archidekt.com/decks/..."
               className="bg-muted border-border"
             />
-            {activeBudgetCap != null ? (
-              <p className="text-sm text-muted-foreground">
-                {activeSeasonName} is capped at {formatUsd(activeBudgetCap)}. Use a public
-                Archidekt deck link so we can validate it automatically and pull the
-                commander from the list.
-              </p>
-            ) : null}
+          </div>
+          <div className="rounded-lg border border-border bg-muted/20 p-4">
+            <h2 className="font-medium">Deck Rules</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {activeBudgetCap != null
+                ? `${activeSeasonName} is currently capped at ${formatUsd(activeBudgetCap)}.`
+                : "Use a public Archidekt list so we can read your deck correctly."}
+            </p>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+              <li>Basic lands do not count toward the deck cost.</li>
+              <li>
+                When you submit a deck, we check the current TCG price of the selected
+                cards in that list.
+              </li>
+              <li>Proxies are allowed.</li>
+              <li>Your deck link must be a public Archidekt deck.</li>
+              <li>
+                Your commander is pulled from the list automatically, so make sure it is
+                tagged correctly there.
+              </li>
+            </ul>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" disabled={loading} className="w-full">

@@ -106,9 +106,10 @@ export function DeckManager({
     <div className="space-y-3">
       {activeSeasonBudgetCap != null ? (
         <p className="text-sm text-muted-foreground">
-          {activeSeasonLabel} is capped at {formatUsd(activeSeasonBudgetCap)}. Deck links must
-          point to a public Archidekt list for budget validation, and commander names are
-          pulled from that list automatically.
+          {activeSeasonLabel} is capped at {formatUsd(activeSeasonBudgetCap)}. If you update
+          the deck link, we&apos;ll re-check the current TCG price from your public Archidekt
+          list. Basic lands are excluded, and the commander is pulled from the list
+          automatically.
         </p>
       ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
