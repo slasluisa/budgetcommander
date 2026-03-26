@@ -1,6 +1,9 @@
 import "server-only";
 
-import { extractArchidektDeckTcgPriceFromHtml } from "@/lib/archidekt-deck-price";
+import {
+  extractArchidektCommanderNamesFromHtml,
+  extractArchidektDeckTcgPriceFromHtml,
+} from "@/lib/archidekt-deck-price";
 import { prisma } from "@/lib/prisma";
 
 const ARCHIDEKT_HOSTS = new Set(["archidekt.com", "www.archidekt.com"]);
@@ -11,7 +14,7 @@ type ActiveBudgetSeason = {
 };
 
 export type DeckBudgetValidationResult =
-  | { ok: true }
+  | { ok: true; commander: string }
   | {
       ok: false;
       error: string;
@@ -61,7 +64,7 @@ export async function validateDeckAgainstLeagueBudget(
     };
   }
 
-  return { ok: true };
+  return { ok: true, commander: deckPrice.commander };
 }
 
 export function formatUsd(amount: number) {
@@ -103,7 +106,7 @@ async function fetchArchidektDeckPrice(
   deckUrl: string,
   activeSeason: ActiveBudgetSeason
 ): Promise<
-  | { ok: true; priceUsd: number }
+  | { ok: true; priceUsd: number; commander: string }
   | { ok: false; error: string; status: 400 | 502 }
 > {
   let response: Response;
@@ -139,6 +142,7 @@ async function fetchArchidektDeckPrice(
 
   const html = await response.text();
   const priceUsd = extractArchidektDeckTcgPriceFromHtml(html);
+  const commanders = extractArchidektCommanderNamesFromHtml(html);
 
   if (priceUsd === null) {
     return {
@@ -149,5 +153,14 @@ async function fetchArchidektDeckPrice(
     };
   }
 
-  return { ok: true, priceUsd };
+  if (commanders.length === 0) {
+    return {
+      ok: false,
+      status: 400,
+      error:
+        "That Archidekt deck does not list any cards in the Commander category. Make sure the deck is set up correctly and the link is public.",
+    };
+  }
+
+  return { ok: true, priceUsd, commander: commanders.join(" / ") };
 }

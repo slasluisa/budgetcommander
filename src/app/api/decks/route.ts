@@ -28,11 +28,11 @@ export async function POST(req: Request) {
   const userId = session.user.id!;
 
   const body = await req.json();
-  const { name, commander, externalLink } = body;
+  const { name, externalLink } = body;
 
-  if (!name || !commander) {
+  if (!name) {
     return NextResponse.json(
-      { error: "name and commander are required" },
+      { error: "name is required" },
       { status: 400 }
     );
   }
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       data: {
         userId,
         name,
-        commander,
+        commander: budgetValidation.commander,
         externalLink: trimmedLink,
       },
     });

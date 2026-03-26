@@ -39,16 +39,14 @@ export function DeckManager({
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<{
     name: string;
-    commander: string;
     externalLink: string;
-  }>({ name: "", commander: "", externalLink: "" });
+  }>({ name: "", externalLink: "" });
 
   function beginEdit(deck: Deck) {
     setError(null);
     setEditingId(deck.id);
     setForm({
       name: deck.name,
-      commander: deck.commander,
       externalLink: deck.externalLink ?? "",
     });
   }
@@ -109,7 +107,8 @@ export function DeckManager({
       {activeSeasonBudgetCap != null ? (
         <p className="text-sm text-muted-foreground">
           {activeSeasonLabel} is capped at {formatUsd(activeSeasonBudgetCap)}. Deck links must
-          point to a public Archidekt list for budget validation.
+          point to a public Archidekt list for budget validation, and commander names are
+          pulled from that list automatically.
         </p>
       ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
@@ -125,13 +124,6 @@ export function DeckManager({
                       value={form.name}
                       onChange={(event) =>
                         setForm((current) => ({ ...current, name: event.target.value }))
-                      }
-                      className="bg-muted border-border"
-                    />
-                    <Input
-                      value={form.commander}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, commander: event.target.value }))
                       }
                       className="bg-muted border-border"
                     />

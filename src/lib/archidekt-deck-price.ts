@@ -6,6 +6,8 @@ const BASIC_LAND_NAMES = new Set([
   "Mountain",
 ]);
 
+type ArchidektCardRecord = Record<string, unknown>;
+
 function readEmbeddedNextData(html: string): unknown | null {
   const match = html.match(
     /<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i
@@ -71,9 +73,7 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function extractArchidektDeckTcgPriceFromHtml(
-  html: string
-): number | null {
+function readDeckCardMap(html: string): ArchidektCardRecord[] | null {
   const nextData = readEmbeddedNextData(html);
   if (!nextData) {
     return null;
@@ -85,23 +85,73 @@ export function extractArchidektDeckTcgPriceFromHtml(
     return null;
   }
 
-  let total = 0;
+  return Object.values(cardMap).filter(
+    (card): card is ArchidektCardRecord => !!card && typeof card === "object"
+  );
+}
 
-  for (const card of Object.values(cardMap)) {
-    if (!card || typeof card !== "object") {
+function cardIsCommander(card: ArchidektCardRecord) {
+  const categoryFields = [
+    card.categories,
+    card.globalCategories,
+    card.defaultCategory,
+  ];
+
+  return categoryFields.some((value) => {
+    if (typeof value === "string") {
+      return value === "Commander";
+    }
+
+    if (!Array.isArray(value)) {
+      return false;
+    }
+
+    return value.some((entry) => entry === "Commander");
+  });
+}
+
+export function extractArchidektCommanderNamesFromHtml(html: string): string[] {
+  const cards = readDeckCardMap(html);
+  if (!cards) {
+    return [];
+  }
+
+  const commanders = new Set<string>();
+
+  for (const card of cards) {
+    if (!cardIsCommander(card)) {
       continue;
     }
 
-    const record = card as Record<string, unknown>;
-    const name = typeof record.name === "string" ? record.name : "";
+    const name = typeof card.name === "string" ? card.name.trim() : "";
+    if (name) {
+      commanders.add(name);
+    }
+  }
+
+  return Array.from(commanders);
+}
+
+export function extractArchidektDeckTcgPriceFromHtml(
+  html: string
+): number | null {
+  const cards = readDeckCardMap(html);
+  if (!cards) {
+    return null;
+  }
+
+  let total = 0;
+
+  for (const card of cards) {
+    const name = typeof card.name === "string" ? card.name : "";
     if (BASIC_LAND_NAMES.has(name)) {
       continue;
     }
 
-    const qty = toNumber(record.qty) ?? 0;
+    const qty = toNumber(card.qty) ?? 0;
     const prices =
-      record.prices && typeof record.prices === "object"
-        ? (record.prices as Record<string, unknown>)
+      card.prices && typeof card.prices === "object"
+        ? (card.prices as Record<string, unknown>)
         : null;
     const tcg = toNumber(prices?.tcg) ?? 0;
 

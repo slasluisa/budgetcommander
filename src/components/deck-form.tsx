@@ -35,7 +35,6 @@ export function DeckForm({
     const formData = new FormData(e.currentTarget);
     const data = {
       name: formData.get("name") as string,
-      commander: formData.get("commander") as string,
       externalLink: (formData.get("externalLink") as string)?.trim() || undefined,
     };
 
@@ -70,10 +69,6 @@ export function DeckForm({
             <Input id="name" name="name" required placeholder="e.g., Zombies Unleashed" className="bg-muted border-border" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="commander">Commander</Label>
-            <Input id="commander" name="commander" required placeholder="e.g., Wilhelt, the Rotcleaver" className="bg-muted border-border" />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="externalLink">Decklist Link</Label>
             <Input
               id="externalLink"
@@ -86,7 +81,8 @@ export function DeckForm({
             {activeBudgetCap != null ? (
               <p className="text-sm text-muted-foreground">
                 {activeSeasonName} is capped at {formatUsd(activeBudgetCap)}. Use a public
-                Archidekt deck link so we can validate it automatically.
+                Archidekt deck link so we can validate it automatically and pull the
+                commander from the list.
               </p>
             ) : null}
           </div>

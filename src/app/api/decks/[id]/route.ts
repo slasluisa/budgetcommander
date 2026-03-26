@@ -26,8 +26,6 @@ export async function PATCH(
 
   const body = await req.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : undefined;
-  const commander =
-    typeof body.commander === "string" ? body.commander.trim() : undefined;
   const externalLink =
     typeof body.externalLink === "string" ? body.externalLink.trim() : undefined;
   const isDefault =
@@ -36,9 +34,6 @@ export async function PATCH(
   if (name !== undefined && !name) {
     return NextResponse.json({ error: "Deck name is required" }, { status: 400 });
   }
-  if (commander !== undefined && !commander) {
-    return NextResponse.json({ error: "Commander is required" }, { status: 400 });
-  }
   if (externalLink !== undefined && !externalLink) {
     return NextResponse.json(
       { error: "Decklist link is required" },
@@ -46,6 +41,7 @@ export async function PATCH(
     );
   }
 
+  let derivedCommander: string | undefined;
   if (externalLink !== undefined && externalLink !== deck.externalLink) {
     const budgetValidation = await validateDeckAgainstLeagueBudget(externalLink);
     if (!budgetValidation.ok) {
@@ -54,6 +50,8 @@ export async function PATCH(
         { status: budgetValidation.status }
       );
     }
+
+    derivedCommander = budgetValidation.commander;
   }
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -61,7 +59,7 @@ export async function PATCH(
       where: { id },
       data: {
         ...(name !== undefined ? { name } : {}),
-        ...(commander !== undefined ? { commander } : {}),
+        ...(derivedCommander !== undefined ? { commander: derivedCommander } : {}),
         ...(externalLink !== undefined ? { externalLink } : {}),
       },
     });

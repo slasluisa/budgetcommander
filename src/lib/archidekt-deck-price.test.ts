@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { extractArchidektDeckTcgPriceFromHtml } from "./archidekt-deck-price.ts";
+import {
+  extractArchidektCommanderNamesFromHtml,
+  extractArchidektDeckTcgPriceFromHtml,
+} from "./archidekt-deck-price.ts";
 
 test("extracts the TCG total from an Archidekt deck page fixture", () => {
   const html = readFileSync(
@@ -41,4 +44,41 @@ test("ignores basic lands when totaling TCG price", () => {
   const price = extractArchidektDeckTcgPriceFromHtml(html);
 
   assert.equal(price, 1.24);
+});
+
+test("extracts one or more commanders from Archidekt card categories", () => {
+  const html = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+    props: {
+      pageProps: {
+        redux: {
+          deck: {
+            cardMap: {
+              a: {
+                name: "Tymna the Weaver",
+                categories: ["Commander"],
+                qty: 1,
+                prices: { tcg: 18.5 },
+              },
+              b: {
+                name: "Kraum, Ludevic's Opus",
+                categories: ["Commander", "Creature"],
+                qty: 1,
+                prices: { tcg: 12.5 },
+              },
+              c: {
+                name: "Esper Sentinel",
+                categories: ["Creature"],
+                qty: 1,
+                prices: { tcg: 20 },
+              },
+            },
+          },
+        },
+      },
+    },
+  })}</script>`;
+
+  const commanders = extractArchidektCommanderNamesFromHtml(html);
+
+  assert.deepEqual(commanders, ["Tymna the Weaver", "Kraum, Ludevic's Opus"]);
 });
