@@ -95,6 +95,10 @@ export function DeckForm({
                 cards in that list.
               </li>
               <li>Proxies are allowed.</li>
+              <li>
+                Click &quot;Optimize Printing&quot; on your Archidekt deck to use
+                the cheapest printing of each card before submitting.
+              </li>
               <li>Your deck link must be a public Archidekt deck.</li>
               <li>
                 Your commander is pulled from the list automatically, so make sure it is
