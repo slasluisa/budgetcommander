@@ -46,13 +46,14 @@ model User {
 }
 
 model Deck {
-  id           String   @id @default(cuid())
-  userId       String
-  name         String
-  commander    String
-  externalLink String?
-  archived     Boolean  @default(false)
-  createdAt    DateTime @default(now())
+  id                  String   @id @default(cuid())
+  userId              String
+  name                String
+  commander           String
+  externalLink        String?
+  validatedPriceCents Int?
+  archived            Boolean  @default(false)
+  createdAt           DateTime @default(now())
 
   user            User         @relation("UserDecks", fields: [userId], references: [id], onDelete: Cascade)
   defaultForUsers User[]       @relation("UserDefaultDeck")

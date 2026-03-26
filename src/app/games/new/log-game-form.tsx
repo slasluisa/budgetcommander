@@ -2,12 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatUsdFromCents } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 type Player = { id: string; name: string; avatar: string | null };
-type Deck = { id: string; name: string; commander: string };
+type Deck = {
+  id: string;
+  name: string;
+  commander: string;
+  validatedPriceCents: number | null;
+};
 
 export function LogGameForm({
   currentUserId,
@@ -28,6 +34,7 @@ export function LogGameForm({
   const [winnerId, setWinnerId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const selectedDeckRecord = decks.find((deck) => deck.id === selectedDeck) ?? null;
 
   function updatePlayer(index: number, value: string) {
     const updated = [...selectedPlayers];
@@ -136,6 +143,12 @@ export function LogGameForm({
                 </option>
               ))}
             </select>
+            {selectedDeckRecord?.validatedPriceCents != null ? (
+              <p className="text-xs text-muted-foreground">
+                Saved validated price:{" "}
+                {formatUsdFromCents(selectedDeckRecord.validatedPriceCents)}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1">

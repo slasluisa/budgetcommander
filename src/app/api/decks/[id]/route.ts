@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { usdToCents } from "@/lib/currency";
 import { validateDeckAgainstLeagueBudget } from "@/lib/deck-budget";
 import { prisma } from "@/lib/prisma";
 
@@ -42,6 +43,7 @@ export async function PATCH(
   }
 
   let derivedCommander: string | undefined;
+  let validatedPriceCents: number | null | undefined;
   if (externalLink !== undefined && externalLink !== deck.externalLink) {
     const budgetValidation = await validateDeckAgainstLeagueBudget(externalLink);
     if (!budgetValidation.ok) {
@@ -52,6 +54,8 @@ export async function PATCH(
     }
 
     derivedCommander = budgetValidation.commander;
+    validatedPriceCents =
+      budgetValidation.priceUsd == null ? null : usdToCents(budgetValidation.priceUsd);
   }
 
   const updated = await prisma.$transaction(async (tx) => {
@@ -61,6 +65,7 @@ export async function PATCH(
         ...(name !== undefined ? { name } : {}),
         ...(derivedCommander !== undefined ? { commander: derivedCommander } : {}),
         ...(externalLink !== undefined ? { externalLink } : {}),
+        ...(validatedPriceCents !== undefined ? { validatedPriceCents } : {}),
       },
     });
 

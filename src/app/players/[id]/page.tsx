@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { formatUsdFromCents } from "@/lib/currency";
 import { buildPlayerAchievements, summarizeWins } from "@/lib/league";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,9 @@ export default async function PlayerProfilePage({
               },
             },
           },
-          deck: { select: { id: true, name: true, commander: true } },
+          deck: {
+            select: { id: true, name: true, commander: true, validatedPriceCents: true },
+          },
         },
       },
     },
@@ -59,7 +62,13 @@ export default async function PlayerProfilePage({
   const overall = summarizeWins(user.gamePlayers);
   const deckStatsMap = new Map<
     string,
-    { name: string; commander: string; wins: number; games: number }
+    {
+      name: string;
+      commander: string;
+      validatedPriceCents: number | null;
+      wins: number;
+      games: number;
+    }
   >();
   const opponentMap = new Map<string, number>();
   const favoriteCommanderCounts = new Map<string, number>();
@@ -70,6 +79,7 @@ export default async function PlayerProfilePage({
       const existing = deckStatsMap.get(key) ?? {
         name: gp.deck.name,
         commander: gp.deck.commander,
+        validatedPriceCents: gp.deck.validatedPriceCents,
         wins: 0,
         games: 0,
       };
@@ -165,6 +175,11 @@ export default async function PlayerProfilePage({
                     <div>
                       <p className="font-medium">{deck.name}</p>
                       <p className="text-sm text-muted-foreground">{deck.commander}</p>
+                      {deck.validatedPriceCents != null ? (
+                        <p className="text-sm text-muted-foreground">
+                          Saved validated price: {formatUsdFromCents(deck.validatedPriceCents)}
+                        </p>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       <p className="text-sm">
@@ -266,6 +281,11 @@ export default async function PlayerProfilePage({
                   <div>
                     <p className="font-medium">{deck.name}</p>
                     <p className="text-sm text-muted-foreground">{deck.commander}</p>
+                    {deck.validatedPriceCents != null ? (
+                      <p className="text-sm text-muted-foreground">
+                        Saved validated price: {formatUsdFromCents(deck.validatedPriceCents)}
+                      </p>
+                    ) : null}
                   </div>
                   {deck.externalLink && (
                     <a

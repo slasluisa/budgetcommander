@@ -4,6 +4,7 @@ import {
   extractArchidektCommanderNamesFromHtml,
   extractArchidektDeckTcgPriceFromHtml,
 } from "@/lib/archidekt-deck-price";
+import { formatUsd } from "@/lib/currency";
 import { prisma } from "@/lib/prisma";
 
 const ARCHIDEKT_HOSTS = new Set(["archidekt.com", "www.archidekt.com"]);
@@ -14,7 +15,7 @@ type ActiveBudgetSeason = {
 };
 
 export type DeckBudgetValidationResult =
-  | { ok: true; commander: string }
+  | { ok: true; commander: string; priceUsd: number | null }
   | {
       ok: false;
       error: string;
@@ -81,16 +82,7 @@ export async function validateDeckAgainstLeagueBudget(
     };
   }
 
-  return { ok: true, commander: deckInfo.commander };
-}
-
-export function formatUsd(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return { ok: true, commander: deckInfo.commander, priceUsd: deckInfo.priceUsd };
 }
 
 function parseArchidektDeckUrl(externalLink: string) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatUsdFromCents } from "@/lib/currency";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +16,7 @@ type GameCardProps = {
       isWinner: boolean;
       confirmed: boolean;
       user: { id: string; name: string; avatar: string | null };
-      deck: { name: string; commander: string } | null;
+      deck: { name: string; commander: string; validatedPriceCents: number | null } | null;
     }[];
   };
 };
@@ -71,7 +72,12 @@ export function GameCard({ game }: GameCardProps) {
                 <div className="min-w-0">
                   <p className="text-sm truncate">{p.user.name}</p>
                   {p.deck && (
-                    <p className="text-xs text-muted-foreground truncate">{p.deck.commander}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {p.deck.commander}
+                      {p.deck.validatedPriceCents != null
+                        ? ` • ${formatUsdFromCents(p.deck.validatedPriceCents)}`
+                        : ""}
+                    </p>
                   )}
                 </div>
               </div>

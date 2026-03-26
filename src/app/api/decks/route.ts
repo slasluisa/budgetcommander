@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { usdToCents } from "@/lib/currency";
 import { validateDeckAgainstLeagueBudget } from "@/lib/deck-budget";
 import { prisma } from "@/lib/prisma";
 
@@ -65,6 +66,8 @@ export async function POST(req: Request) {
         name,
         commander: budgetValidation.commander,
         externalLink: trimmedLink,
+        validatedPriceCents:
+          budgetValidation.priceUsd == null ? null : usdToCents(budgetValidation.priceUsd),
       },
     });
 

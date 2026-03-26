@@ -2,24 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatUsd, formatUsdFromCents } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-function formatUsd(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
 
 type Deck = {
   id: string;
   name: string;
   commander: string;
   externalLink: string | null;
+  validatedPriceCents: number | null;
   isDefault: boolean;
   usedThisSeason: boolean;
 };
@@ -155,6 +148,11 @@ export function DeckManager({
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">{deck.commander}</p>
+                    {deck.validatedPriceCents != null ? (
+                      <p className="text-sm text-muted-foreground">
+                        Saved validated price: {formatUsdFromCents(deck.validatedPriceCents)}
+                      </p>
+                    ) : null}
                     {deck.externalLink && (
                       <a
                         href={deck.externalLink}

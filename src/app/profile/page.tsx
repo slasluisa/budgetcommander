@@ -238,6 +238,7 @@ export default async function ProfilePage() {
                 name: deck.name,
                 commander: deck.commander,
                 externalLink: deck.externalLink,
+                validatedPriceCents: deck.validatedPriceCents,
                 isDefault: deck.id === user?.defaultDeckId,
                 usedThisSeason: deck.gamePlayers.length > 0,
               }))}

@@ -62,7 +62,7 @@ export default async function GamesPage({
         players: {
           include: {
             user: { select: { id: true, name: true, avatar: true } },
-            deck: { select: { name: true, commander: true } },
+            deck: { select: { name: true, commander: true, validatedPriceCents: true } },
           },
         },
         season: { select: { name: true } },

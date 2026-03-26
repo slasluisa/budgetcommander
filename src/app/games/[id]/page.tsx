@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GameActions } from "./game-actions";
 import { PendingGameTools } from "@/components/pending-game-tools";
+import { formatUsdFromCents } from "@/lib/currency";
 import { canSendReminder, getPendingAgeLabel, isGameOverdue } from "@/lib/league";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,15 @@ export default async function GameDetailPage({
       players: {
         include: {
           user: { select: { id: true, name: true, avatar: true } },
-          deck: { select: { id: true, name: true, commander: true, externalLink: true } },
+          deck: {
+            select: {
+              id: true,
+              name: true,
+              commander: true,
+              externalLink: true,
+              validatedPriceCents: true,
+            },
+          },
         },
       },
       season: { select: { name: true, budgetCap: true } },
@@ -46,14 +55,19 @@ export default async function GameDetailPage({
       (game.createdById === session.user.id || isAdmin)
   );
 
-  let userDecks: { id: string; name: string; commander: string }[] = [];
+  let userDecks: {
+    id: string;
+    name: string;
+    commander: string;
+    validatedPriceCents: number | null;
+  }[] = [];
   let currentUser: { defaultDeckId: string | null } | null = null;
 
   if ((needsAction || canManagePending) && session?.user) {
     [userDecks, currentUser] = await Promise.all([
       prisma.deck.findMany({
         where: { userId: session.user.id, archived: false },
-        select: { id: true, name: true, commander: true },
+        select: { id: true, name: true, commander: true, validatedPriceCents: true },
       }),
       prisma.user.findUnique({
         where: { id: session.user.id },
@@ -124,23 +138,25 @@ export default async function GameDetailPage({
                 <div>
                   <p className="font-medium">{p.user.name}</p>
                   {p.deck ? (
-                    <p className="text-sm text-muted-foreground">
-                      {p.deck.commander}
+                    <div className="text-sm text-muted-foreground">
+                      <p>{p.deck.commander}</p>
+                      {p.deck.validatedPriceCents != null ? (
+                        <p>
+                          Saved validated price:{" "}
+                          {formatUsdFromCents(p.deck.validatedPriceCents)}
+                        </p>
+                      ) : null}
                       {p.deck.externalLink && (
-                        <>
-                          {" "}
-                          &middot;{" "}
-                          <a
-                            href={p.deck.externalLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-secondary hover:underline"
-                          >
-                            Decklist
-                          </a>
-                        </>
+                        <a
+                          href={p.deck.externalLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-secondary hover:underline"
+                        >
+                          Decklist
+                        </a>
                       )}
-                    </p>
+                    </div>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">Deck not selected</p>
                   )}

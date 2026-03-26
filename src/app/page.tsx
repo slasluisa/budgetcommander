@@ -25,7 +25,7 @@ export default async function Home() {
         players: {
           include: {
             user: { select: { id: true, name: true, avatar: true } },
-            deck: { select: { name: true, commander: true } },
+            deck: { select: { name: true, commander: true, validatedPriceCents: true } },
           },
         },
         season: { select: { name: true } },
@@ -240,7 +240,7 @@ export default async function Home() {
                 <h3 className="text-lg font-semibold">Budget Check</h3>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {currentSeason?.status === "ACTIVE" && currentSeason.budgetCap != null
-                    ? `${currentSeason.name} is currently capped at $${currentSeason.budgetCap}. Decks are validated against this cap using TCG pricing at the time of submission.`
+                    ? `${currentSeason.name} is currently capped at $${currentSeason.budgetCap}. Decks are validated against this cap using TCG pricing at the time of submission, and that saved price follows the deck around the app.`
                     : "Decks are checked using the current TCG price of the selected cards in the submitted list. The budget cap is set each season by community vote."}
                 </p>
               </div>
