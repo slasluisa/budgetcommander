@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatUsd, formatUsdFromCents } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export function DeckManager({
   activeSeasonBudgetCap?: number | null;
 }) {
   const router = useRouter();
+  const [localDecks, setLocalDecks] = useState(decks);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +35,10 @@ export function DeckManager({
     name: string;
     externalLink: string;
   }>({ name: "", externalLink: "" });
+
+  useEffect(() => {
+    setLocalDecks(decks);
+  }, [decks]);
 
   function beginEdit(deck: Deck) {
     setError(null);
@@ -58,6 +63,17 @@ export function DeckManager({
         setError(body?.error ?? "Failed to update deck");
         return;
       }
+      const updatedDeck = (await res.json()) as Deck;
+      setLocalDecks((current) =>
+        current.map((deck) =>
+          deck.id === deckId
+            ? {
+                ...deck,
+                ...updatedDeck,
+              }
+            : deck
+        )
+      );
       setEditingId(null);
       router.refresh();
     } finally {
@@ -69,11 +85,22 @@ export function DeckManager({
     setLoadingId(deckId);
     try {
       setError(null);
-      await fetch(`/api/decks/${deckId}`, {
+      const res = await fetch(`/api/decks/${deckId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isDefault }),
       });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(body?.error ?? "Failed to update deck");
+        return;
+      }
+      setLocalDecks((current) =>
+        current.map((deck) => ({
+          ...deck,
+          isDefault: isDefault ? deck.id === deckId : false,
+        }))
+      );
       router.refresh();
     } finally {
       setLoadingId(null);
@@ -84,14 +111,20 @@ export function DeckManager({
     setLoadingId(deckId);
     try {
       setError(null);
-      await fetch(`/api/decks/${deckId}`, { method: "DELETE" });
+      const res = await fetch(`/api/decks/${deckId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(body?.error ?? "Failed to archive deck");
+        return;
+      }
+      setLocalDecks((current) => current.filter((deck) => deck.id !== deckId));
       router.refresh();
     } finally {
       setLoadingId(null);
     }
   }
 
-  if (decks.length === 0) {
+  if (localDecks.length === 0) {
     return <p className="text-muted-foreground">No decks registered yet.</p>;
   }
 
@@ -106,7 +139,7 @@ export function DeckManager({
         </p>
       ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {decks.map((deck) => {
+      {localDecks.map((deck) => {
         const editing = editingId === deck.id;
         return (
           <div key={deck.id} className="rounded-lg bg-muted/20 p-3">

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import {
+  normalizeArchidektDeckUrl,
+  shouldRevalidateDeckLink,
+} from "@/lib/archidekt-deck-url";
 import { usdToCents } from "@/lib/currency";
 import { validateDeckAgainstLeagueBudget } from "@/lib/deck-budget";
 import { prisma } from "@/lib/prisma";
@@ -42,9 +46,21 @@ export async function PATCH(
     );
   }
 
+  const canonicalExternalLink =
+    externalLink !== undefined
+      ? (normalizeArchidektDeckUrl(externalLink) ?? externalLink)
+      : undefined;
+
   let derivedCommander: string | undefined;
   let validatedPriceCents: number | null | undefined;
-  if (externalLink !== undefined && externalLink !== deck.externalLink) {
+  if (
+    externalLink !== undefined &&
+    shouldRevalidateDeckLink({
+      previousExternalLink: deck.externalLink,
+      nextExternalLink: externalLink,
+      previousValidatedPriceCents: deck.validatedPriceCents,
+    })
+  ) {
     const budgetValidation = await validateDeckAgainstLeagueBudget(externalLink);
     if (!budgetValidation.ok) {
       return NextResponse.json(
@@ -64,7 +80,9 @@ export async function PATCH(
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(derivedCommander !== undefined ? { commander: derivedCommander } : {}),
-        ...(externalLink !== undefined ? { externalLink } : {}),
+        ...(canonicalExternalLink !== undefined
+          ? { externalLink: canonicalExternalLink }
+          : {}),
         ...(validatedPriceCents !== undefined ? { validatedPriceCents } : {}),
       },
     });
