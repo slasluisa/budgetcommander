@@ -109,7 +109,7 @@ export default async function Home() {
                   before the poll closes.
                 </p>
                 {session?.user ? (
-                  <p className="mt-4 text-sm text-primary/90">
+                  <p className="mt-4 text-sm text-accent">
                     Your vote saves immediately, and you can update it anytime while the poll is
                     open.
                   </p>
@@ -221,7 +221,7 @@ export default async function Home() {
           <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
 
           <div className="relative">
-            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary/70">
+            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-accent">
               Before You Build
             </p>
             <h2 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">

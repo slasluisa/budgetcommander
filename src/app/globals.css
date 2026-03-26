@@ -48,7 +48,16 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* MTG Mystic theme - dark mode only */
+/*
+ * MTG Mystic theme - dark mode only
+ *
+ * Accessibility notes:
+ * - muted-foreground (#a1afc0) targets ≥7:1 contrast on --background (#1a0a2e)
+ * - Avoid using --primary (#7c3aed) for readable text — it only achieves ~2:1
+ *   contrast on the background. Use --accent (#a78bfa, ~7:1) for purple text.
+ * - Never reduce text opacity below 80% on dark backgrounds; use a defined
+ *   color variable instead.
+ */
 :root {
   --background: #1a0a2e;
   --foreground: #e2e8f0;
@@ -61,7 +70,7 @@
   --secondary: #3b82f6;
   --secondary-foreground: #f8fafc;
   --muted: #16213e;
-  --muted-foreground: #94a3b8;
+  --muted-foreground: #a1afc0;
   --accent: #a78bfa;
   --accent-foreground: #f8fafc;
   --destructive: #ef4444;
@@ -96,7 +105,7 @@
   --secondary: #3b82f6;
   --secondary-foreground: #f8fafc;
   --muted: #16213e;
-  --muted-foreground: #94a3b8;
+  --muted-foreground: #a1afc0;
   --accent: #a78bfa;
   --accent-foreground: #f8fafc;
   --destructive: #ef4444;

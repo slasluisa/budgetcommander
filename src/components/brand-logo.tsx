@@ -134,7 +134,7 @@ export function BrandLogo({
           Budget Commander
         </span>
         {showLeagueLabel ? (
-          <span className="mt-1 truncate text-[0.68rem] font-medium uppercase tracking-[0.42em] text-muted-foreground/90">
+          <span className="mt-1 truncate text-[0.68rem] font-medium uppercase tracking-[0.42em] text-muted-foreground">
             League
           </span>
         ) : null}
